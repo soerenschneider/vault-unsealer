@@ -4,8 +4,7 @@ go 1.18
 
 require (
 	github.com/go-playground/validator/v10 v10.12.0
-	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/go-retryablehttp v0.7.2
+	github.com/hashicorp/go-retryablehttp v0.7.4
 	github.com/prometheus/client_golang v1.15.0
 	github.com/rs/zerolog v1.29.1
 )
@@ -16,7 +15,6 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v0.16.2 // indirect
 	github.com/leodido/go-urn v1.2.2 // indirect
