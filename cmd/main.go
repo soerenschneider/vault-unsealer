@@ -5,6 +5,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
@@ -13,12 +20,6 @@ import (
 	"github.com/soerenschneider/vault-unsealer/internal/unsealing"
 	"github.com/soerenschneider/vault-unsealer/pkg/vault"
 	"github.com/soerenschneider/vault-unsealer/pkg/vault/auth"
-	"net/http"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
-	"time"
 )
 
 const (
@@ -139,39 +140,29 @@ func (u *vaultUnsealer) buildDependencies(clusterConf config.ClusterConfig) {
 	}
 }
 
-func (u *vaultUnsealer) buildKeyRetriever(clusterConf config.ClusterConfig) (unsealing.UnsealKeyRetriever, error) {
-	var retriever unsealing.UnsealKeyRetriever
+func (u *vaultUnsealer) buildVaultClient() (vault.Client, error) {
+	return vault.NewSimpleVaultClient(defaultHttpClient)
+}
 
+func (u *vaultUnsealer) buildKeyRetriever(clusterConf config.ClusterConfig) (unsealing.UnsealKeyRetriever, error) {
 	conf, err := config.GetRetrieveConfig(clusterConf)
 	if err != nil {
 		return nil, err
 	}
 
+	var retriever unsealing.UnsealKeyRetriever
 	if conf.Kv2Config != nil {
-		log.Info().Msg("Building Vault KV2 unseal key retriever")
-		auth, err := auth.BuildVaultAuth(conf.TransitConfig.VaultAuthType, conf.TransitConfig.VaultAuthConfig, conf.TransitConfig.VaultEndpoint, defaultHttpClient)
-		if err != nil {
-			return nil, err
-		}
-		retriever, err = unsealing.NewVaultKvRetriever(u.vaultClient.(unsealing.VaultKv2), auth, *conf.Kv2Config)
-		if err != nil {
-			return nil, err
-		}
+		retriever, err = u.buildKv2Retriever(conf)
 	} else if conf.TransitConfig != nil {
-		log.Info().Msg("Building Vault transit impl to receive unseal keys")
-		auth, err := auth.BuildVaultAuth(conf.TransitConfig.VaultAuthType, conf.TransitConfig.VaultAuthConfig, conf.TransitConfig.VaultEndpoint, defaultHttpClient)
-		if err != nil {
-			return nil, err
-		}
-		retriever, err = unsealing.NewVaultTransitReceiver(u.vaultClient.(unsealing.VaultTransit), auth, conf.TransitConfig)
-		if err != nil {
-			return nil, err
-		}
+		retriever, err = u.buildTransitRetriever(conf)
 	} else if conf.StaticConfig != nil {
-		log.Info().Msg("Building static unseal key receiver")
-		retriever, err = unsealing.NewStaticUnsealKeyRetriever(conf.StaticConfig.UnsealKey)
+		retriever, err = u.buildStaticRetriever(conf)
 	} else {
 		return nil, errors.New("invalid unseal config")
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	if clusterConf.CacheUnsealKey {
@@ -181,6 +172,27 @@ func (u *vaultUnsealer) buildKeyRetriever(clusterConf config.ClusterConfig) (uns
 	return retriever, nil
 }
 
-func (u *vaultUnsealer) buildVaultClient() (vault.Client, error) {
-	return vault.NewSimpleVaultClient(defaultHttpClient)
+func (u *vaultUnsealer) buildKv2Retriever(conf *config.VaultRetrieveConfig) (unsealing.UnsealKeyRetriever, error) {
+	log.Info().Msg("Building Vault KV2 unseal key retriever")
+	auth, err := auth.BuildVaultAuth(conf.TransitConfig.VaultAuthType, conf.TransitConfig.VaultAuthConfig, conf.TransitConfig.VaultEndpoint, defaultHttpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return unsealing.NewVaultKvRetriever(u.vaultClient.(unsealing.VaultKv2), auth, *conf.Kv2Config)
+}
+
+func (u *vaultUnsealer) buildStaticRetriever(conf *config.VaultRetrieveConfig) (unsealing.UnsealKeyRetriever, error) {
+	log.Info().Msg("Building static unseal key receiver")
+	return unsealing.NewStaticUnsealKeyRetriever(conf.StaticConfig.UnsealKey)
+}
+
+func (u *vaultUnsealer) buildTransitRetriever(conf *config.VaultRetrieveConfig) (unsealing.UnsealKeyRetriever, error) {
+	log.Info().Msg("Building Vault transit impl to receive unseal keys")
+	auth, err := auth.BuildVaultAuth(conf.TransitConfig.VaultAuthType, conf.TransitConfig.VaultAuthConfig, conf.TransitConfig.VaultEndpoint, defaultHttpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return unsealing.NewVaultTransitReceiver(u.vaultClient.(unsealing.VaultTransit), auth, conf.TransitConfig)
 }
