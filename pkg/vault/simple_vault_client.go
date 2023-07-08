@@ -7,11 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/rs/zerolog/log"
 )
 
 type SimpleVaultClient struct {
@@ -29,7 +30,12 @@ func NewSimpleVaultClient(client *http.Client) (*SimpleVaultClient, error) {
 
 func (c *SimpleVaultClient) GetSealedStatus(ctx context.Context, instance string) (*SealedStatus, error) {
 	url := fmt.Sprintf("%s/v1/sys/seal-status", instance)
-	resp, err := c.client.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -46,17 +52,26 @@ func (c *SimpleVaultClient) GetSealedStatus(ctx context.Context, instance string
 	return &parsed, err
 }
 
-func (c *SimpleVaultClient) Unseal(ctx context.Context, instance string, unsealKey string) error {
-	url := fmt.Sprintf("%s/v1/sys/unseal", instance)
+func getUnsealPayload(unsealKey string) ([]byte, error) {
 	data := map[string]string{
 		"key": unsealKey,
 	}
-	encodedData, err := json.Marshal(data)
+	return json.Marshal(data)
+}
+
+func (c *SimpleVaultClient) Unseal(ctx context.Context, instance string, unsealKey string) error {
+	encodedData, err := getUnsealPayload(unsealKey)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.client.Post(url, "application/json", bytes.NewBuffer(encodedData))
+	url := fmt.Sprintf("%s/v1/sys/unseal", instance)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(encodedData))
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -73,37 +88,9 @@ func (c *SimpleVaultClient) Unseal(ctx context.Context, instance string, unsealK
 	return nil
 }
 
-func (c *SimpleVaultClient) doGetCall(auth AuthMethod, url string) ([]byte, error) {
-	token, err := auth.Authenticate()
-	if err != nil {
-		return nil, err
-	}
-	log.Info().Msg("Received vault token")
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("X-Vault-Token", token)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	return body, nil
-}
-
 func (c *SimpleVaultClient) ReadKv2(ctx context.Context, auth AuthMethod, instance string, reqData ReadVaultKv2Request) (string, error) {
 	url := fmt.Sprintf("%s/v1/%s/data/%s", instance, reqData.MountPath, reqData.SecretPath)
-	body, err := c.doGetCall(auth, url)
+	body, err := c.doGetCall(ctx, auth, url)
 	if err != nil {
 		return "", err
 	}
@@ -111,8 +98,7 @@ func (c *SimpleVaultClient) ReadKv2(ctx context.Context, auth AuthMethod, instan
 	parsedData := struct {
 		Data map[string]interface{} `json:"data"`
 	}{}
-	err = json.Unmarshal(body, &parsedData)
-	if err != nil {
+	if err = json.Unmarshal(body, &parsedData); err != nil {
 		return "", nil
 	}
 
@@ -127,40 +113,6 @@ func (c *SimpleVaultClient) ReadKv2(ctx context.Context, auth AuthMethod, instan
 	}
 
 	return fmt.Sprintf("%s", unsealKey), nil
-}
-
-func (c *SimpleVaultClient) doPostCall(ctx context.Context, auth AuthMethod, url string, data map[string]string) ([]byte, error) {
-	token, err := auth.Authenticate()
-	if err != nil {
-		return nil, err
-	}
-	log.Info().Msg("Received vault token")
-
-	encodedData, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(encodedData))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("X-Vault-Token", token)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	return body, nil
 }
 
 func (c *SimpleVaultClient) Decrypt(ctx context.Context, auth AuthMethod, instance string, reqData TransitDecryptRequest) (string, error) {
@@ -200,4 +152,66 @@ func (c *SimpleVaultClient) Decrypt(ctx context.Context, auth AuthMethod, instan
 	}
 
 	return strings.TrimSuffix(string(decoded), "\n"), nil
+}
+
+func (c *SimpleVaultClient) doPostCall(ctx context.Context, auth AuthMethod, url string, data map[string]string) ([]byte, error) {
+	token, err := auth.Authenticate(c.client)
+	if err != nil {
+		return nil, err
+	}
+	log.Info().Msg("Received vault token")
+
+	encodedData, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(encodedData))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("X-Vault-Token", token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return body, nil
+}
+
+func (c *SimpleVaultClient) doGetCall(ctx context.Context, auth AuthMethod, url string) ([]byte, error) {
+	token, err := auth.Authenticate(c.client)
+	if err != nil {
+		return nil, err
+	}
+	log.Info().Msg("Received vault token")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("X-Vault-Token", token)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return body, nil
 }
