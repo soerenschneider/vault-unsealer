@@ -2,11 +2,12 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/rs/zerolog/log"
 	"github.com/soerenschneider/vault-unsealer/internal/config"
 	vault_auth "github.com/soerenschneider/vault-unsealer/internal/config/vault"
 	"github.com/soerenschneider/vault-unsealer/pkg/vault"
-	"net/http"
 )
 
 func BuildVaultAuth(authType string, authData map[string]any, vaultEndpoint string, httpClient *http.Client) (vault.AuthMethod, error) {
@@ -27,7 +28,7 @@ func BuildVaultAuth(authType string, authData map[string]any, vaultEndpoint stri
 		if err != nil {
 			return nil, err
 		}
-		return NewAppRoleAuth(httpClient, vaultEndpoint, *conf)
+		return NewAppRoleAuth(vaultEndpoint, *conf)
 	default:
 		return nil, fmt.Errorf("unknown vault auth implementation: %s", authType)
 	}

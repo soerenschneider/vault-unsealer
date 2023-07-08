@@ -5,16 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/rs/zerolog/log"
-	"github.com/soerenschneider/vault-unsealer/internal/config/vault"
 	"io"
 	"net/http"
+
+	"github.com/soerenschneider/vault-unsealer/internal/config/vault"
 )
 
 type AppRoleAuth struct {
-	client *http.Client
-
 	vaultEndpoint string
 	conf          vault.AuthApproleConfig
 }
@@ -28,14 +25,8 @@ type LoginResponse struct {
 	}
 }
 
-func NewAppRoleAuth(client *http.Client, vaultEndpoint string, conf vault.AuthApproleConfig) (*AppRoleAuth, error) {
-	if client == nil {
-		log.Warn().Msg("Empty http client passed, building new client")
-		client = retryablehttp.NewClient().HTTPClient
-	}
-
+func NewAppRoleAuth(vaultEndpoint string, conf vault.AuthApproleConfig) (*AppRoleAuth, error) {
 	return &AppRoleAuth{
-		client:        client,
 		conf:          conf,
 		vaultEndpoint: vaultEndpoint,
 	}, nil
@@ -45,7 +36,7 @@ func (t *AppRoleAuth) Cleanup() error {
 	return errors.New("not implemented")
 }
 
-func (t *AppRoleAuth) Authenticate() (string, error) {
+func (t *AppRoleAuth) Authenticate(client *http.Client) (string, error) {
 	url := fmt.Sprintf("%s/v1/auth/%s/login", t.vaultEndpoint, t.conf.ApproleMountOrDefault())
 
 	data, err := t.conf.GetLoginData()
@@ -57,7 +48,7 @@ func (t *AppRoleAuth) Authenticate() (string, error) {
 		return "", err
 	}
 
-	resp, err := http.Post(url, "application/json", bytes.NewReader(jsonData))
+	resp, err := client.Post(url, "application/json", bytes.NewReader(jsonData)) // #nosec G107
 	if err != nil {
 		return "", err
 	}

@@ -3,6 +3,7 @@ package vault
 import (
 	"context"
 	"fmt"
+	"net/http"
 )
 
 type Client interface {
@@ -11,7 +12,7 @@ type Client interface {
 }
 
 type AuthMethod interface {
-	Authenticate() (string, error)
+	Authenticate(client *http.Client) (string, error)
 	Cleanup() error
 }
 

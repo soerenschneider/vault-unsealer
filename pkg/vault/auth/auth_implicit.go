@@ -3,9 +3,11 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"github.com/rs/zerolog/log"
+	"net/http"
 	"os"
 	"path"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -20,7 +22,7 @@ func NewTokenImplicitAuth() *ImplicitAuth {
 	return &ImplicitAuth{}
 }
 
-func (t *ImplicitAuth) Authenticate() (string, error) {
+func (t *ImplicitAuth) Authenticate(_ *http.Client) (string, error) {
 	token := os.Getenv(tokenEnvVar)
 	if len(token) > 0 {
 		log.Info().Msgf("Using vault token from env var %s", tokenEnvVar)
