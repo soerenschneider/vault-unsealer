@@ -46,6 +46,9 @@ func main() {
 	configureLogging()
 	configureHttpClient()
 
+	log.Info().Msgf("vault-unsealer %s (%s)", internal.BuildVersion, internal.CommitHash)
+	internal.VersionMetric.WithLabelValues(internal.BuildVersion, internal.CommitHash).Set(1)
+
 	unsealer := &vaultUnsealer{}
 	log.Info().Msg("Building config objects")
 	unsealer.retrieveConfig()

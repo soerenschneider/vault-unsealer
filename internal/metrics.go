@@ -12,6 +12,11 @@ const (
 )
 
 var (
+	VersionMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "version",
+	}, []string{"version", "hash"})
+
 	UptimeMetric = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "start_time_seconds",
