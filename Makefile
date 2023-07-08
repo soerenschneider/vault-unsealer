@@ -39,6 +39,9 @@ version-info:
 fmt:
 	find . -iname "*.go" -exec go fmt {} \; 
 
+lint:
+	golangci-lint run
+
 pre-commit-init:
 	pre-commit install
 	pre-commit install --hook-type commit-msg
