@@ -30,7 +30,7 @@ cross-build:
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=0       go build -ldflags="-X '$(MODULE)/internal.BuildVersion=${VERSION}' -X '$(MODULE)/internal.CommitHash=${COMMIT_HASH}'" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-aarch64   ./cmd
 
 docker-build:
-	docker build -t "$(DOCKER_PREFIX)/$(BINARY_NAME)" --build-arg MODE=server .
+	docker build -t "$(DOCKER_PREFIX)/$(BINARY_NAME)" .
 
 version-info:
 	$(eval VERSION := $(shell git describe --tags --abbrev=0 || echo "dev"))
