@@ -10,12 +10,12 @@
       "check_interval_s": 60,
       "unseal_key_impl": "vault-transit",
       "unseal_key_config": {
-	"vault_auth_type": "approle",
-	"vault_auth_config": {
-	  "role_id": "yyy",
-	  "secret_id": "xxx",
-	  "approle_mount": "approle"
-	},
+        "vault_auth_type": "approle",
+        "vault_auth_config": {
+          "role_id": "yyy",
+          "secret_id": "xxx",
+          "approle_mount": "approle"
+        },
         "vault_endpoint": "https://vault.ha.soeren.cloud",
         "vault_transit_mount_path": "transit_vault_unsealer",
         "vault_transit_key_name": "prod",
