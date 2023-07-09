@@ -1,25 +1,29 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 )
 
 const (
-	tokenEnvVar = "VAULT_TOKEN"
-	tokenFile   = ".vault-token"
+	tokenEnvVar      = "VAULT_TOKEN"
+	defaultTokenFile = ".vault-token"
 )
 
 type ImplicitAuth struct {
+	tokenFile string
 }
 
-func NewTokenImplicitAuth() *ImplicitAuth {
-	return &ImplicitAuth{}
+func NewTokenImplicitAuth(tokenFile string) *ImplicitAuth {
+	if len(tokenFile) == 0 {
+		tokenFile = defaultTokenFile
+	}
+
+	return &ImplicitAuth{tokenFile: tokenFile}
 }
 
 func (t *ImplicitAuth) Authenticate(_ *http.Client) (string, error) {
@@ -29,23 +33,30 @@ func (t *ImplicitAuth) Authenticate(_ *http.Client) (string, error) {
 		return token, nil
 	}
 
-	dirname, err := os.UserHomeDir()
+	tokenFile := expandPath(t.tokenFile)
+	read, err := os.ReadFile(tokenFile)
 	if err != nil {
-		return "", fmt.Errorf("can't get user home dir: %v", err)
+		return "", fmt.Errorf("error reading file '%s': %v", tokenFile, err)
 	}
 
-	tokenPath := path.Join(dirname, tokenFile)
-	if _, err := os.Stat(tokenPath); errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("file '%s' to read vault token from does not exist", tokenPath)
-	}
-
-	read, err := os.ReadFile(tokenPath)
-	if err != nil {
-		return "", fmt.Errorf("error reading file '%s': %v", tokenPath, err)
-	}
-
-	log.Info().Msgf("Using vault token from file '%s'", tokenPath)
+	log.Info().Msgf("Using vault token from file '%s'", tokenFile)
 	return string(read), nil
+}
+
+func expandPath(file string) string {
+	if len(file) > 0 && file[0] == '~' {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return file
+		}
+
+		if len(file) > 1 {
+			return filepath.Join(homeDir, file[1:])
+		}
+		return homeDir
+	}
+
+	return file
 }
 
 func (t *ImplicitAuth) Cleanup() error {

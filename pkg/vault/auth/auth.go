@@ -14,7 +14,7 @@ func BuildVaultAuth(authType string, authData map[string]any, vaultEndpoint stri
 	switch authType {
 	case "implicit":
 		log.Info().Msg("Building 'implicit' vault auth implementation")
-		return NewTokenImplicitAuth(), nil
+		return NewTokenImplicitAuth(""), nil
 	case "token":
 		log.Info().Msg("Building 'token' vault auth implementation")
 		conf, err := config.UnmarshalGeneric[vault_auth.AuthTokenConfig](authData)

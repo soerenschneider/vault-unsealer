@@ -65,5 +65,9 @@ func (t *AppRoleAuth) Authenticate(client *http.Client) (string, error) {
 		return "", nil
 	}
 
+	if len(loginResp.Auth.ClientToken) == 0 {
+		return "", errors.New("invalid response")
+	}
+
 	return loginResp.Auth.ClientToken, nil
 }

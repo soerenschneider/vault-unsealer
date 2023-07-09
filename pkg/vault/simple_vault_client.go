@@ -15,6 +15,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var ErrAuth = errors.New("authentication failed")
+
 type SimpleVaultClient struct {
 	client *http.Client
 }
@@ -45,6 +47,8 @@ func (c *SimpleVaultClient) GetSealedStatus(ctx context.Context, instance string
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	// TODO: check if answer is appropriate
 
 	parsed := SealedStatus{}
 	err = json.Unmarshal(body, &parsed)

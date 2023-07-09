@@ -17,7 +17,7 @@ type AuthMethod interface {
 }
 
 type SealedStatus struct {
-	Sealed      bool   `json:"sealed"`
+	Sealed      bool   `json:"sealed,omitempty"`
 	ClusterName string `json:"cluster_name,omitempty"`
 	ClusterId   string `json:"cluster_id,omitempty"`
 	Version     string `json:"version"`
