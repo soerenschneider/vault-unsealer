@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2023-07-12)
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([8bbbe25](https://github.com/soerenschneider/vault-unsealer/commit/8bbbe25ccc0b4eaae1f945caf2d0e1a99d371216))
+
 ## [1.0.1](https://github.com/soerenschneider/vault-unsealer/compare/v1.0.0...v1.0.1) (2023-04-22)
 
 
