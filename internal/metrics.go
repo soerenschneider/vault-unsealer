@@ -26,7 +26,7 @@ var (
 		Name:      "start_time_seconds",
 	})
 
-	UnsealKeyRetrievalErrors = promauto.NewGauge(prometheus.GaugeOpts{
+	UnsealKeyRetrievalErrors = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: "unseal",
 		Name:      "key_retrieval_errors_total",
