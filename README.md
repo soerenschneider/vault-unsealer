@@ -1,5 +1,6 @@
 # vault-unsealer
 [![Go Report Card](https://goreportcard.com/badge/github.com/soerenschneider/vault-unsealer)](https://goreportcard.com/report/github.com/soerenschneider/vault-unsealer)
+![test-workflow](https://github.com/soerenschneider/vault-unsealer/actions/workflows/test.yaml/badge.svg)
 ![release-workflow](https://github.com/soerenschneider/vault-unsealer/actions/workflows/release.yaml/badge.svg)
 ![golangci-lint-workflow](https://github.com/soerenschneider/vault-unsealer/actions/workflows/golangci-lint.yaml/badge.svg)
 
