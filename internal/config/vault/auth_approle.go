@@ -13,10 +13,10 @@ const (
 )
 
 type AuthApproleConfig struct {
-	RoleId           string `json:"role_id" validate:"required"`
-	SecretId         string `json:"secret_id"`
-	SecretIdFile     string `json:"secret_id_file"`
-	ApproleMountPath string `json:"approle_mount"`
+	RoleId           string `yaml:"role_id" validate:"required"`
+	SecretId         string `yaml:"secret_id"`
+	SecretIdFile     string `yaml:"secret_id_file"`
+	ApproleMountPath string `yaml:"approle_mount"`
 }
 
 func (c *AuthApproleConfig) ApproleMountOrDefault() string {

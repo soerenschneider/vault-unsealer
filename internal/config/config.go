@@ -1,10 +1,11 @@
 package config
 
 import (
-	"encoding/json"
+	"os"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
-	"os"
+	"gopkg.in/yaml.v3"
 )
 
 var validate = validator.New()
@@ -20,17 +21,17 @@ func NewDefaultConfig() UnsealConfig {
 }
 
 type UnsealConfig struct {
-	Clusters       []ClusterConfig `json:"clusters"`
-	PrometheusAddr string          `json:"prometheus_addr"`
+	Clusters       []ClusterConfig `yaml:"clusters"`
+	PrometheusAddr string          `yaml:"prometheus_addr,omitempty"`
 }
 
 type ClusterConfig struct {
-	Endpoints            []string       `json:"endpoints" validate:"required"`
-	VerifyClusterId      string         `json:"verify_cluster_id,omitempty"`
-	CacheUnsealKey       bool           `json:"cache_unseal_key"`
-	CheckIntervalSeconds int            `json:"check_interval_s" validate:"gte=60,lte=3600"`
-	RetrieveConfig       map[string]any `json:"unseal_key_config"`
-	RetrieveImpl         string         `json:"unseal_key_impl" validate:"oneof=vault-transit vault-kv2 static"`
+	Endpoints            []string       `yaml:"endpoints" validate:"required"`
+	VerifyClusterId      string         `yaml:"verify_cluster_id,omitempty"`
+	CacheUnsealKey       bool           `yaml:"cache_unseal_key"`
+	CheckIntervalSeconds int            `yaml:"check_interval_s" validate:"gte=60,lte=3600"`
+	RetrieveConfig       map[string]any `yaml:"unseal_key_config"`
+	RetrieveImpl         string         `yaml:"unseal_key_impl" validate:"oneof=vault-transit vault-kv2 static"`
 }
 
 type VaultRetrieveConfig struct {
@@ -68,12 +69,12 @@ func GetRetrieveConfig(clusterConf ClusterConfig) (*VaultRetrieveConfig, error) 
 func UnmarshalGeneric[T any](data map[string]any) (*T, error) {
 	var ret T
 
-	marshalled, err := json.Marshal(data)
+	marshalled, err := yaml.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ret, json.Unmarshal(marshalled, &ret)
+	return &ret, yaml.Unmarshal(marshalled, &ret)
 }
 
 func Validate(conf *UnsealConfig) error {
@@ -87,6 +88,6 @@ func ReadConfig(file string) (*UnsealConfig, error) {
 	}
 
 	conf := UnsealConfig{}
-	err = json.Unmarshal(data, &conf)
+	err = yaml.Unmarshal(data, &conf)
 	return &conf, err
 }

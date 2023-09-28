@@ -6,12 +6,12 @@ const (
 )
 
 type VaultKv2Config struct {
-	VaultAuthType      string         `json:"vault_auth_type" validate:"required,oneof implicit,token,approle"`
-	VaultAuthConfig    map[string]any `json:"vault_auth_config" validate:"required"`
-	VaultEndpoint      string         `json:"vault_endpoint" validate:"required,http_url"`
-	VaultKv2MountPath  string         `json:"vault_kv2_mount_path"`
-	VaultKv2SecretPath string         `json:"vault_kv2_secret_path"`
-	VaultKv2SecretKey  string         `json:"vault_kv2_secret_key"`
+	VaultAuthType      string         `yaml:"vault_auth_type" validate:"required,oneof implicit,token,approle"`
+	VaultAuthConfig    map[string]any `yaml:"vault_auth_config" validate:"required"`
+	VaultEndpoint      string         `yaml:"vault_endpoint" validate:"required,http_url"`
+	VaultKv2MountPath  string         `yaml:"vault_kv2_mount_path"`
+	VaultKv2SecretPath string         `yaml:"vault_kv2_secret_path"`
+	VaultKv2SecretKey  string         `yaml:"vault_kv2_secret_key"`
 }
 
 func (c *VaultKv2Config) MountPathOrDefault() string {
