@@ -47,6 +47,7 @@ $ docker run -v $(pwd)/contrib:/config ghcr.io/soerenschneider/vault-unsealer:ma
 
 ### Binaries
 Head over to the [prebuilt binaries](https://github.com/soerenschneider/vault-unsealer/releases) and download the correct binary for your system.
+Use the example [systemd service file](contrib/vault-unsealer.service) to run it at boot.
 
 ### From Source
 As a prerequesite, you need to have [Golang SDK](https://go.dev/dl/) installed. After that, you can install vault-unsealer from source by invoking:
@@ -55,36 +56,10 @@ $ go install github.com/soerenschneider/vault-unsealer@latest
 ```
 
 ## Configuration
-```json
-{
-  "clusters": [
-    {
-      "endpoints": [
-        "https://vault.dd.soeren.cloud:8200",
-        "https://vault.ez.soeren.cloud:8200",
-        "https://vault.pt.soeren.cloud:8200"
-      ],
-      "cache_unseal_key": true,
-      "check_interval_s": 60,
-      "unseal_key_impl": "vault-transit",
-      "unseal_key_config": {
-        "vault_auth_type": "approle",
-        "vault_auth_config": {
-          "role_id": "yyy",
-          "secret_id": "xxx",
-          "approle_mount": "approle"
-        },
-        "vault_endpoint": "https://vault.ha.soeren.cloud",
-        "vault_transit_mount_path": "transit_vault_unsealer",
-        "vault_transit_key_name": "prod",
-        "vault_transit_ciphertext": "cipher"
-      }
-    }
-  ]
-}
-```
 
-Use the example [systemd service file](contrib/vault-unsealer.service) to run it at boot.
+An example configuration can be found [here](contrib/example-config-static.json). Note that this example is oversimplified and not secure.
+Head over to the [configuration section](docs/configuration.md) to see more details.
+
 
 ## Observability
 
@@ -108,4 +83,4 @@ All metrics are prefixed with `vault_unsealer`.
 ![unsealer](docs/vault-unsealer.svg)
 
 ## CHANGELOG
-Check out the [changelog](CHANGELOG.md) here
+The changelog can be found [here](CHANGELOG.md)
