@@ -8,31 +8,25 @@ Automatically unseals configured Vault instances using a push mechanism.
 
 ## Key Features
 
-🔐 Retrieve Vault's unseal key from Vault's KV2 or transit secret engine
-
-🛂 Authenticate against Vault using AppRole, (explicit) token or implicit__ auth
-
-🔭 Robust automation through observability
+🔐 Retrieve Vault's unseal key from Vault's KV2 or transit secret engine<br/>
+🛂 Authenticate against Vault using AppRole, (explicit) token or _implicit_ auth<br/>
+🔭 Robust automation through observability<br/>
 
 ## FAQ
 
-**Q:** Why would I need auto-unsealing?
-
+**Q:** Why would I need auto-unsealing?<br/>
 **A:** I'm trying to push OS-, container image- and Vault-updates itself rather aggressively, therefore I'm not patching any machines manually, but automatically (see [conditional-reboot](https://github.com/soerenschneider/conditional-reboot)). Hence, I need a mechanism that unseals preconfigured Vault instances automatically without human intervention.
 <hr/>
 
-**Q:** Ok, but why not using auto-unsealing using [AWS KMS](https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-aws-kms) / [Azure Key Vault](https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-azure-keyvault) / [GCP KMS](https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-gcp-kms)?
-
+**Q:** Ok, but why not using auto-unsealing using [AWS KMS](https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-aws-kms) / [Azure Key Vault](https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-azure-keyvault) / [GCP KMS](https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-gcp-kms)?<br/>
 **A:** If your Vault clusters / instances do not run one of the specified cloud providers (like mine), you'll have to issue and deal with access keys to said platforms: distribute them secretly, keep them safe and rotate them frequently. Vault-unsealer [reads the unseal key from Vault itself](#how-does-it-work) (make sure it's well protected!) as I've written enough tooling that helps me keep my Vault credentials safe and rotate them both frequently and automatically (e.g. [vault-approle-cli](https://github.com/soerenschneider/scripts/blob/main/vault/vault-approle-cli.py) or [vault-mfa](https://github.com/soerenschneider/scripts/blob/main/vault/vault_mfa.py)).
 <hr/>
 
-**Q:** Why not using auto-unsealing using [Vault Transit](https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-transit)?
-
+**Q:** Why not using auto-unsealing using [Vault Transit](https://developer.hashicorp.com/vault/tutorials/auto-unseal/autounseal-transit)?<br/>
 **A:** I did not want to manage another cluster / production instances of Hashicorp Vault even though I built some tooling around it that keeps maintenance low.
 <hr/>
 
-**Q:** Do only three real question justify an own FAQ section?
-
+**Q:** Do only three real question justify an own FAQ section?<br/>
 **A:** Probably not, but here we are.
 <hr/>
 
@@ -63,21 +57,7 @@ Head over to the [configuration section](docs/configuration.md) to see more deta
 
 ## Observability
 
-### Metrics
-
-Metrics are available in the Prometheus format and can be collected using Prometheus / Victoriametrics or similar.
-
-
-All metrics are prefixed with `vault_unsealer`. 
-
-| Name                               | Type      | Labels                |
-|------------------------------------|-----------|-----------------------|
-| version                            | GaugeVec  | version, hash         |
-| start_time_seconds                 | Gauge     |                       |
-| key_retrieval_errors_total         | Counter   |                       |
-| agent_last_check_timestamp_seconds | GaugeVec  | vault_instance        |
-| agent_sealed_status_bool           | GaugeVec  | vault_instance        |
-| unseal_errors_total                | GaugeVec  | error, vault_instance |
+Check [here](docs/metrics.md)
 
 ## How does it work?
 ![unsealer](docs/vault-unsealer.svg)
