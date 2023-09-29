@@ -40,12 +40,12 @@ $ docker run -v $(pwd)/contrib:/config ghcr.io/soerenschneider/vault-unsealer:ma
 ````
 
 ### Binaries
-Head over to the [prebuilt binaries](https://github.com/soerenschneider/vault-unsealer/releases) and download the correct binary for your system.
+Download prebuilt binaries from the [releases section](https://github.com/soerenschneider/vault-unsealer/releases) for your system.
 Use the example [systemd service file](contrib/vault-unsealer.service) to run it at boot.
 
 ### From Source
-As a prerequesite, you need to have [Golang SDK](https://go.dev/dl/) installed. After that, you can install vault-unsealer from source by invoking:
-```text
+As a prerequisite, you need to have [Golang SDK](https://go.dev/dl/) installed. Then you can install vault-unsealer from source by invoking:
+```shell
 $ go install github.com/soerenschneider/vault-unsealer@latest
 ```
 
