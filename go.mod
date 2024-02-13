@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/go-playground/validator/v10 v10.16.0
-	github.com/hashicorp/go-retryablehttp v0.7.4
+	github.com/hashicorp/go-retryablehttp v0.7.5
 	github.com/prometheus/client_golang v1.17.0
 	github.com/rs/zerolog v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
