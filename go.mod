@@ -3,7 +3,7 @@ module github.com/soerenschneider/vault-unsealer
 go 1.18
 
 require (
-	github.com/go-playground/validator/v10 v10.19.0
+	github.com/go-playground/validator/v10 v10.21.0
 	github.com/hashicorp/go-retryablehttp v0.7.5
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rs/zerolog v1.32.0
