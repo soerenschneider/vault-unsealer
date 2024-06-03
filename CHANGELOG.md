@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.2](https://github.com/soerenschneider/vault-unsealer/compare/v1.1.1...v1.1.2) (2024-06-03)
+
+
+### Bug Fixes
+
+* **deps:** bump github.com/go-playground/validator/v10 ([e14c026](https://github.com/soerenschneider/vault-unsealer/commit/e14c0264b4b2f139d72cbe50a0c284820dc2fe32))
+* **deps:** bump github.com/hashicorp/go-retryablehttp ([b72959a](https://github.com/soerenschneider/vault-unsealer/commit/b72959a804e69f004648b114e90f29edef42386f))
+* **deps:** bump github.com/prometheus/client_golang ([e4d9d5a](https://github.com/soerenschneider/vault-unsealer/commit/e4d9d5a633efb9acf61ce1eac24c4c32d53df5a8))
+* **deps:** bump github.com/rs/zerolog from 1.32.0 to 1.33.0 ([b5e0a3c](https://github.com/soerenschneider/vault-unsealer/commit/b5e0a3ca1bb053405121f5f643dc55ee1abc9097))
+* **deps:** bump golang from 1.22.1 to 1.22.2 ([38afcd8](https://github.com/soerenschneider/vault-unsealer/commit/38afcd8591cfa4eca6ead64666c2555dc1161cd8))
+* **deps:** bump golang from 1.22.2 to 1.22.3 ([ed4c9bf](https://github.com/soerenschneider/vault-unsealer/commit/ed4c9bf3aa14b36dbafb6f3bfa472e50fe6fd68a))
+* **deps:** bump golang.org/x/net from 0.21.0 to 0.23.0 ([7bc45ff](https://github.com/soerenschneider/vault-unsealer/commit/7bc45ffaada34ebbbcf11f82b08d2068b647ad20))
+
 ## [1.1.1](https://github.com/soerenschneider/vault-unsealer/compare/v1.1.0...v1.1.1) (2024-03-21)
 
 
