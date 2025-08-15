@@ -1,12 +1,14 @@
 module github.com/soerenschneider/vault-unsealer
 
-go 1.22
+go 1.23
+
+toolchain go1.24.4
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.31.0
 	github.com/aws/aws-sdk-go-v2/service/kms v1.44.0
 	github.com/go-playground/validator/v10 v10.21.0
-	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rs/zerolog v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
