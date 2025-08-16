@@ -24,3 +24,7 @@ func NewStaticUnsealKeyRetriever(unsealKey string) (*StaticUnsealKeyRetriever, e
 func (r *StaticUnsealKeyRetriever) RetrieveUnsealKey(_ context.Context) (string, error) {
 	return r.unsealKey, nil
 }
+
+func (r *StaticUnsealKeyRetriever) Name() string {
+	return "static"
+}

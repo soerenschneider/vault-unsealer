@@ -10,6 +10,8 @@ type VaultTransitConfig struct {
 	VaultTransitKeyName        string         `yaml:"vault_transit_key_name" validate:"required"`
 	VaultTransitCiphertextFile string         `yaml:"vault_transit_ciphertext_file" validate:"file"`
 	VaultTransitCiphertext     string         `yaml:"vault_transit_ciphertext"`
+
+	WrappedConfig
 }
 
 func (c *VaultTransitConfig) GetCiphertext() (string, error) {

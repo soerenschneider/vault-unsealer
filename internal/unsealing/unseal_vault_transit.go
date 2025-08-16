@@ -3,6 +3,7 @@ package unsealing
 import (
 	"context"
 	"errors"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
 	"github.com/soerenschneider/vault-unsealer/pkg/vault"
@@ -59,4 +60,8 @@ func (r *VaultTransitReceiver) RetrieveUnsealKey(ctx context.Context) (string, e
 	}
 
 	return r.transitClient.Decrypt(ctx, r.authMethod, r.vaultEndpoint, req)
+}
+
+func (r *VaultTransitReceiver) Name() string {
+	return "vault-transit"
 }

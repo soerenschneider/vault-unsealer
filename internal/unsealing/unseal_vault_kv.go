@@ -3,6 +3,7 @@ package unsealing
 import (
 	"context"
 	"errors"
+
 	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
 	"github.com/soerenschneider/vault-unsealer/pkg/vault"
 )
@@ -44,4 +45,8 @@ func (r *VaultKvRetriever) RetrieveUnsealKey(ctx context.Context) (string, error
 	}
 
 	return r.vaultClient.ReadKv2(ctx, r.authMethod, r.vaultEndpoint, reqData)
+}
+
+func (r *VaultKvRetriever) Name() string {
+	return "vault-kv"
 }

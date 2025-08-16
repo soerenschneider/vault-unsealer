@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
 )
 
 type AwsKmsKeyRetriever struct {
@@ -15,19 +16,28 @@ type AwsKmsKeyRetriever struct {
 	encryptionContext map[string]string
 }
 
-func NewAwsKmsKeyRetriever(cipherText string, encryptionContext map[string]string) (*AwsKmsKeyRetriever, error) {
-	if cipherText == "" {
+func NewAwsKmsKeyRetriever(conf *unseal.AwsKmsConfig) (*AwsKmsKeyRetriever, error) {
+	if conf == nil {
+		return nil, errors.New("empty config provided")
+	}
+
+	ciphertext, err := conf.GetCiphertext()
+	if err != nil {
+		return nil, err
+	}
+
+	if ciphertext == "" {
 		return nil, errors.New("empty ciphertext provided")
 	}
 
-	ciphertextBlob, err := base64.StdEncoding.DecodeString(cipherText)
+	ciphertextBlob, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode ciphertext: %v", err)
 	}
 
 	return &AwsKmsKeyRetriever{
 		ciphertextBlob:    ciphertextBlob,
-		encryptionContext: encryptionContext,
+		encryptionContext: conf.EncryptionContext,
 	}, nil
 }
 
@@ -48,4 +58,8 @@ func (r *AwsKmsKeyRetriever) RetrieveUnsealKey(ctx context.Context) (string, err
 	}
 
 	return string(resp.Plaintext), nil
+}
+
+func (r *AwsKmsKeyRetriever) Name() string {
+	return "aws-kms"
 }

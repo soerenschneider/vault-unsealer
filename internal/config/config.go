@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/go-playground/validator/v10"
@@ -26,44 +27,58 @@ type UnsealConfig struct {
 }
 
 type ClusterConfig struct {
-	Endpoints            []string       `yaml:"endpoints" validate:"required"`
-	VerifyClusterId      string         `yaml:"verify_cluster_id,omitempty"`
-	CacheUnsealKey       bool           `yaml:"cache_unseal_key"`
-	CheckIntervalSeconds int            `yaml:"check_interval_s" validate:"gte=60,lte=3600"`
-	RetrieveConfig       map[string]any `yaml:"unseal_key_config"`
-	RetrieveImpl         string         `yaml:"unseal_key_impl" validate:"oneof=vault-transit vault-kv2 static"`
+	Endpoints            []string         `yaml:"endpoints" validate:"required"`
+	VerifyClusterId      string           `yaml:"verify_cluster_id,omitempty"`
+	CacheUnsealKey       bool             `yaml:"cache_unseal_key"`
+	CheckIntervalSeconds int              `yaml:"check_interval_s" validate:"gte=60,lte=3600"`
+	RetrieveConfig       []map[string]any `yaml:"unseal_key_config"`
 }
 
 type VaultRetrieveConfig struct {
 	TransitConfig *unseal.VaultTransitConfig
 	StaticConfig  *unseal.VaultStaticConfig
 	Kv2Config     *unseal.VaultKv2Config
+	AwsKmsConfig  *unseal.AwsKmsConfig
 }
 
-func GetRetrieveConfig(clusterConf ClusterConfig) (*VaultRetrieveConfig, error) {
-	conf := &VaultRetrieveConfig{}
-	switch clusterConf.RetrieveImpl {
-	case "vault-transit":
-		parsedConf, err := UnmarshalGeneric[unseal.VaultTransitConfig](clusterConf.RetrieveConfig)
-		if err != nil {
-			return nil, err
+//nolint:cyclop
+func GetRetrieveConfig(clusterConf ClusterConfig) ([]VaultRetrieveConfig, error) {
+	ret := make([]VaultRetrieveConfig, len(clusterConf.RetrieveConfig))
+
+	for idx, confEntry := range clusterConf.RetrieveConfig {
+		retrieveImpl, ok := confEntry["impl"]
+		if !ok {
+			return nil, fmt.Errorf("entry %d is missing required attribute 'impl'", idx)
 		}
-		conf.TransitConfig = parsedConf
-	case "vault-kv2":
-		parsedConf, err := UnmarshalGeneric[unseal.VaultKv2Config](clusterConf.RetrieveConfig)
-		if err != nil {
-			return nil, err
+		switch retrieveImpl {
+		case "aws-kms":
+			parsedConf, err := UnmarshalGeneric[unseal.AwsKmsConfig](confEntry)
+			if err != nil {
+				return nil, err
+			}
+			ret[idx].AwsKmsConfig = parsedConf
+		case "vault-transit":
+			parsedConf, err := UnmarshalGeneric[unseal.VaultTransitConfig](confEntry)
+			if err != nil {
+				return nil, err
+			}
+			ret[idx].TransitConfig = parsedConf
+		case "vault-kv2":
+			parsedConf, err := UnmarshalGeneric[unseal.VaultKv2Config](confEntry)
+			if err != nil {
+				return nil, err
+			}
+			ret[idx].Kv2Config = parsedConf
+		case "static":
+			parsedConf, err := UnmarshalGeneric[unseal.VaultStaticConfig](confEntry)
+			if err != nil {
+				return nil, err
+			}
+			ret[idx].StaticConfig = parsedConf
 		}
-		conf.Kv2Config = parsedConf
-	case "static":
-		parsedConf, err := UnmarshalGeneric[unseal.VaultStaticConfig](clusterConf.RetrieveConfig)
-		if err != nil {
-			return nil, err
-		}
-		conf.StaticConfig = parsedConf
 	}
 
-	return conf, nil
+	return ret, nil
 }
 
 func UnmarshalGeneric[T any](data map[string]any) (*T, error) {

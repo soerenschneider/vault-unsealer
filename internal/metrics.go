@@ -26,11 +26,11 @@ var (
 		Name:      "start_time_seconds",
 	})
 
-	UnsealKeyRetrievalErrors = promauto.NewCounter(prometheus.CounterOpts{
+	UnsealKeyRetrievalErrors = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: "unseal",
 		Name:      "key_retrieval_errors_total",
-	})
+	}, []string{"retriever"})
 
 	LastCheck = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
