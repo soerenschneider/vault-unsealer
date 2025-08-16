@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog/log"
 	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
 	"gopkg.in/yaml.v3"
 )
@@ -41,7 +42,6 @@ type VaultRetrieveConfig struct {
 	AwsKmsConfig  *unseal.AwsKmsConfig
 }
 
-//nolint:cyclop
 func GetRetrieveConfig(clusterConf ClusterConfig) ([]VaultRetrieveConfig, error) {
 	ret := make([]VaultRetrieveConfig, len(clusterConf.RetrieveConfig))
 
@@ -52,33 +52,29 @@ func GetRetrieveConfig(clusterConf ClusterConfig) ([]VaultRetrieveConfig, error)
 		}
 		switch retrieveImpl {
 		case "aws-kms":
-			parsedConf, err := UnmarshalGeneric[unseal.AwsKmsConfig](confEntry)
-			if err != nil {
-				return nil, err
-			}
+			parsedConf := MustUnmarshalGeneric[unseal.AwsKmsConfig](confEntry)
 			ret[idx].AwsKmsConfig = parsedConf
 		case "vault-transit":
-			parsedConf, err := UnmarshalGeneric[unseal.VaultTransitConfig](confEntry)
-			if err != nil {
-				return nil, err
-			}
+			parsedConf := MustUnmarshalGeneric[unseal.VaultTransitConfig](confEntry)
 			ret[idx].TransitConfig = parsedConf
 		case "vault-kv2":
-			parsedConf, err := UnmarshalGeneric[unseal.VaultKv2Config](confEntry)
-			if err != nil {
-				return nil, err
-			}
+			parsedConf := MustUnmarshalGeneric[unseal.VaultKv2Config](confEntry)
 			ret[idx].Kv2Config = parsedConf
 		case "static":
-			parsedConf, err := UnmarshalGeneric[unseal.VaultStaticConfig](confEntry)
-			if err != nil {
-				return nil, err
-			}
+			parsedConf := MustUnmarshalGeneric[unseal.VaultStaticConfig](confEntry)
 			ret[idx].StaticConfig = parsedConf
 		}
 	}
 
 	return ret, nil
+}
+
+func MustUnmarshalGeneric[T any](data map[string]any) *T {
+	ret, err := UnmarshalGeneric[T](data)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to unmarshal config")
+	}
+	return ret
 }
 
 func UnmarshalGeneric[T any](data map[string]any) (*T, error) {
