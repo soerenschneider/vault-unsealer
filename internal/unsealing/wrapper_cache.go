@@ -3,8 +3,10 @@ package unsealing
 import (
 	"context"
 	"errors"
-	"github.com/rs/zerolog/log"
+	"fmt"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 )
 
 type CachedUnsealKeyRetriever struct {
@@ -39,4 +41,8 @@ func (r *CachedUnsealKeyRetriever) RetrieveUnsealKey(ctx context.Context) (strin
 	}
 
 	return *r.unsealKey, nil
+}
+
+func (r *CachedUnsealKeyRetriever) Name() string {
+	return fmt.Sprintf("cached-%s", r.retriever.Name())
 }
