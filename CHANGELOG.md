@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.2.0](https://github.com/soerenschneider/vault-unsealer/compare/v1.1.1...v1.2.0) (2025-08-16)
+
+
+### Features
+
+* enable specifying multiple key retrievers ([a98717a](https://github.com/soerenschneider/vault-unsealer/commit/a98717a4ebc1ecd24baad460e460633ea1c14649))
+* enable unseal from AWS KMS ([cec5665](https://github.com/soerenschneider/vault-unsealer/commit/cec566525a1d12c21a7393bcff864649cfcdc85a))
+* enable wrapping unseal key with a passphrase ([843b1c5](https://github.com/soerenschneider/vault-unsealer/commit/843b1c5d3708e4faba50be79622a5c015a520a7d))
+
+
+### Bug Fixes
+
+* **deps:** bump github.com/go-playground/validator/v10 ([e14c026](https://github.com/soerenschneider/vault-unsealer/commit/e14c0264b4b2f139d72cbe50a0c284820dc2fe32))
+* **deps:** bump github.com/hashicorp/go-retryablehttp ([b72959a](https://github.com/soerenschneider/vault-unsealer/commit/b72959a804e69f004648b114e90f29edef42386f))
+* **deps:** bump github.com/prometheus/client_golang ([e4d9d5a](https://github.com/soerenschneider/vault-unsealer/commit/e4d9d5a633efb9acf61ce1eac24c4c32d53df5a8))
+* **deps:** bump github.com/rs/zerolog from 1.32.0 to 1.33.0 ([b5e0a3c](https://github.com/soerenschneider/vault-unsealer/commit/b5e0a3ca1bb053405121f5f643dc55ee1abc9097))
+* **deps:** bump golang from 1.22.1 to 1.22.2 ([38afcd8](https://github.com/soerenschneider/vault-unsealer/commit/38afcd8591cfa4eca6ead64666c2555dc1161cd8))
+* **deps:** bump golang from 1.22.2 to 1.22.3 ([ed4c9bf](https://github.com/soerenschneider/vault-unsealer/commit/ed4c9bf3aa14b36dbafb6f3bfa472e50fe6fd68a))
+* **deps:** bump golang from 1.22.3 to 1.23.0 ([7d3105d](https://github.com/soerenschneider/vault-unsealer/commit/7d3105db4f0ecd124b133eb4c9eeee9c5b330895))
+* **deps:** bump golang.org/x/net from 0.21.0 to 0.23.0 ([7bc45ff](https://github.com/soerenschneider/vault-unsealer/commit/7bc45ffaada34ebbbcf11f82b08d2068b647ad20))
+* fix ineffectual assign ([3bca94d](https://github.com/soerenschneider/vault-unsealer/commit/3bca94d3a8a3d9722780a0d190f8f68557d3650a))
+
 ## [1.1.1](https://github.com/soerenschneider/vault-unsealer/compare/v1.1.0...v1.1.1) (2024-03-21)
 
 
