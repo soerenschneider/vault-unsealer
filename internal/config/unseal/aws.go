@@ -5,6 +5,7 @@ import "os"
 type AwsKmsConfig struct {
 	AwsTransitCiphertextFile string            `yaml:"aws_transit_ciphertext_file" validate:"required_without=AwsTransitCiphertext,omitempty,file"`
 	AwsTransitCiphertext     string            `yaml:"aws_transit_ciphertext" validate:"required_without=AwsTransitCiphertextFile,omitempty"`
+	Region                   string            `yaml:"aws_region"`
 	EncryptionContext        map[string]string `yaml:"encryption_context"`
 	WrappedConfig
 }
