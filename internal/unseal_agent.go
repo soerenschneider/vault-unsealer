@@ -11,6 +11,7 @@ import (
 	"github.com/soerenschneider/vault-unsealer/internal/config"
 	"github.com/soerenschneider/vault-unsealer/internal/unsealing"
 	"github.com/soerenschneider/vault-unsealer/pkg/vault"
+	"go.uber.org/multierr"
 )
 
 type UnsealAgent struct {
@@ -39,16 +40,24 @@ func (u *UnsealAgent) Run(ctx context.Context, wg *sync.WaitGroup) error {
 	wg.Add(1)
 	defer wg.Done()
 
+	var errs error
+	var totalErrors int
 	for _, keyRetriever := range u.keyRetrievers {
 		log.Info().Str("Retriever", keyRetriever.Name()).Msg("Checking if receiving unseal key works...")
 		// Test whether key retrieval works before we actually need it
 		_, err := keyRetriever.RetrieveUnsealKey(ctx)
 		if err != nil {
-			log.Error().Err(err).Msg("Could not retrieve unseal key")
+			log.Error().Str("Retriever", keyRetriever.Name()).Err(err).Msg("Failed to retrieve unseal key")
 			UnsealKeyRetrievalErrors.WithLabelValues(keyRetriever.Name()).Inc()
-			return err
+			errs = multierr.Append(errs, err)
+			totalErrors++
+		} else {
+			log.Info().Str("Retriever", keyRetriever.Name()).Msg("Received unseal key")
 		}
-		log.Info().Msg("Received unseal key")
+	}
+
+	if totalErrors == len(u.keyRetrievers) {
+		return fmt.Errorf("all retrievers failed: %w", errs)
 	}
 
 	u.conditionallyUnsealInstances(ctx)
@@ -92,19 +101,24 @@ func (u *UnsealAgent) conditionalUnsealInstance(ctx context.Context, instance st
 
 	log.Info().Msgf("Instance %s is sealed, trying to unseal...", instance)
 	UnsealedStatus.WithLabelValues(instance).Set(0)
+	var errs error
 	for _, keyRetriever := range u.keyRetrievers {
 		unsealKey, err := keyRetriever.RetrieveUnsealKey(ctx)
 		if err != nil {
 			UnsealKeyRetrievalErrors.WithLabelValues(keyRetriever.Name()).Inc()
-			return fmt.Errorf("retrieving unsealing key failed: %v", err)
+			errs = multierr.Append(errs, fmt.Errorf("retrieving unsealing key failed for %q: %w", keyRetriever.Name(), err))
+			continue
 		}
 
 		err = u.client.Unseal(ctx, instance, unsealKey)
 		if err != nil {
 			UnsealErrors.WithLabelValues("unseal_failed", instance).Inc()
-			return err
+			errs = multierr.Append(errs, fmt.Errorf("unsealing failed: %w", err))
+			continue
 		}
+
+		log.Info().Str("instance", instance).Str("retriever", keyRetriever.Name()).Msg("Instance unsealed successfully")
 	}
 
-	return nil
+	return errs
 }
