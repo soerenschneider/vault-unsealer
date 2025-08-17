@@ -13,7 +13,7 @@ type VaultKv2Config struct {
 	VaultKv2SecretPath string         `yaml:"vault_kv2_secret_path"`
 	VaultKv2SecretKey  string         `yaml:"vault_kv2_secret_key"`
 
-	WrappedConfig
+	WrappedConfig `yaml:",inline"`
 }
 
 func (c *VaultKv2Config) MountPathOrDefault() string {

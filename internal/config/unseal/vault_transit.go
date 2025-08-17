@@ -11,7 +11,7 @@ type VaultTransitConfig struct {
 	VaultTransitCiphertextFile string         `yaml:"vault_transit_ciphertext_file" validate:"file"`
 	VaultTransitCiphertext     string         `yaml:"vault_transit_ciphertext"`
 
-	WrappedConfig
+	WrappedConfig `yaml:",inline"`
 }
 
 func (c *VaultTransitConfig) GetCiphertext() (string, error) {
