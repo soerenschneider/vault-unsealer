@@ -235,6 +235,7 @@ func wrapRetriever(retriever unsealing.UnsealKeyRetriever, wrappedPassphrase str
 
 	var err error
 	if wrappedPassphrase != "" {
+		log.Info().Str("retriever", retriever.Name()).Msg("Wrapping unseal key with age")
 		retriever, err = unsealing.NewAgeWrapper(wrappedPassphrase, retriever)
 		if err != nil {
 			return nil, fmt.Errorf("could not build age wrapper around %s retriever: %w", retriever.Name(), err)
@@ -245,6 +246,7 @@ func wrapRetriever(retriever unsealing.UnsealKeyRetriever, wrappedPassphrase str
 		return retriever, nil
 	}
 
+	log.Info().Str("retriever", retriever.Name()).Msg("Caching results for retriever")
 	retriever, err = unsealing.NewCachedUnsealKeyRetriever(retriever)
 	if err != nil {
 		return nil, fmt.Errorf("could not build cache wrapper around %s retriever: %w", retriever.Name(), err)
