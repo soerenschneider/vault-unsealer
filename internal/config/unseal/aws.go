@@ -7,7 +7,7 @@ type AwsKmsConfig struct {
 	AwsTransitCiphertext     string            `yaml:"aws_transit_ciphertext" validate:"required_without=AwsTransitCiphertextFile,omitempty"`
 	Region                   string            `yaml:"aws_region"`
 	EncryptionContext        map[string]string `yaml:"encryption_context"`
-	WrappedConfig
+	WrappedConfig            `yaml:",inline"`
 }
 
 func (c *AwsKmsConfig) GetCiphertext() (string, error) {
