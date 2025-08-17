@@ -14,6 +14,7 @@ import (
 type AwsKmsKeyRetriever struct {
 	ciphertextBlob    []byte
 	encryptionContext map[string]string
+	region            string
 }
 
 func NewAwsKmsKeyRetriever(conf *unseal.AwsKmsConfig) (*AwsKmsKeyRetriever, error) {
@@ -38,6 +39,7 @@ func NewAwsKmsKeyRetriever(conf *unseal.AwsKmsConfig) (*AwsKmsKeyRetriever, erro
 	return &AwsKmsKeyRetriever{
 		ciphertextBlob:    ciphertextBlob,
 		encryptionContext: conf.EncryptionContext,
+		region:            conf.Region,
 	}, nil
 }
 
@@ -45,6 +47,10 @@ func (r *AwsKmsKeyRetriever) RetrieveUnsealKey(ctx context.Context) (string, err
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	if r.region != "" {
+		cfg.Region = r.region
 	}
 
 	client := kms.NewFromConfig(cfg)
