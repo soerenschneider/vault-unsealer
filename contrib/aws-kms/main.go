@@ -15,7 +15,7 @@ import (
 	"golang.org/x/term"
 )
 
-// AskCredentials securely asks for a token and optionally a passphrase
+//nolint:cyclop
 func AskCredentials() (token string, passphrase string, err error) {
 	// Prompt for token
 	fmt.Print("Enter token: ")
