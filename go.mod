@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	filippo.io/age v1.2.1
 	github.com/aws/aws-sdk-go-v2/config v1.31.0
-	github.com/aws/aws-sdk-go-v2/service/kms v1.44.0
+	github.com/aws/aws-sdk-go-v2/service/kms v1.44.2
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/prometheus/client_golang v1.23.0
@@ -16,11 +16,11 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.38.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.38.1 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.4 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.4 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.3 // indirect
