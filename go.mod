@@ -9,7 +9,7 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/prometheus/client_golang v1.23.0
-	github.com/rs/zerolog v1.34.0
+	github.com/rs/zerolog v1.35.1
 	go.uber.org/multierr v1.11.0
 	golang.org/x/term v0.34.0
 	gopkg.in/yaml.v3 v3.0.1
