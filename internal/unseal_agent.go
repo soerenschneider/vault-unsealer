@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/config"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/unsealing"
-	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/vault"
 	"go.uber.org/multierr"
 )
 
