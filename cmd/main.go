@@ -19,8 +19,8 @@ import (
 	"github.com/soerenschneider/vault-unsealer/v2/internal/config"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/config/unseal"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/unsealing"
-	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault"
-	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault/auth"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/vault/auth"
 	"go.uber.org/multierr"
 )
 

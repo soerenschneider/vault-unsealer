@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/soerenschneider/vault-unsealer/v2/internal/config/unseal"
-	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/vault"
 )
 
 type VaultKv2 interface {
