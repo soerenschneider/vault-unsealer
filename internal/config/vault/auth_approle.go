@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 const (
@@ -45,6 +46,6 @@ func (c *AuthApproleConfig) GetLoginData() (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not read secret_id from file '%s': %v", c.SecretIdFile, err)
 	}
-	loginData[KeySecretId] = string(data)
+	loginData[KeySecretId] = strings.TrimSpace(string(data))
 	return loginData, nil
 }

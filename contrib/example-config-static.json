@@ -1,4 +1,5 @@
 {
+  "prometheus_addr": ":9132",
   "clusters": [
     {
       "endpoints": [
@@ -6,12 +7,13 @@
         "https://vault.ez.soeren.cloud:8200",
         "https://vault.pt.soeren.cloud:8200"
       ],
-      "cache_unseal_key": true,
       "check_interval_s": 60,
-      "unseal_key_impl": "static",
-      "unseal_key_config": {
-        "unseal_key": "bla"
-      }
+      "unseal_key_config": [
+        {
+          "impl": "static",
+          "unseal_key": "bla"
+        }
+      ]
     }
   ]
 }

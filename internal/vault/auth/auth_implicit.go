@@ -59,6 +59,6 @@ func expandPath(file string) string {
 	return file
 }
 
-func (t *ImplicitAuth) Cleanup() error {
+func (t *ImplicitAuth) Cleanup(_ *http.Client) error {
 	return nil
 }

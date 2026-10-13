@@ -18,7 +18,7 @@ import (
 //nolint:cyclop
 func AskCredentials() (token string, passphrase string, err error) {
 	// Prompt for token
-	fmt.Print("Enter token: ")
+	fmt.Print("Enter unseal token: ")
 	byteToken, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", "", fmt.Errorf("failed to read token: %w", err)
@@ -30,7 +30,7 @@ func AskCredentials() (token string, passphrase string, err error) {
 	var choice string
 	for choice != "y" && choice != "n" && choice != "yes" && choice != "no" {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("Do you want to add a passphrase? (y/n): ")
+		fmt.Print("Do you want to add a passphrase to encrypt token via age? (y/n): ")
 		choice, _ = reader.ReadString('\n')
 		choice = strings.TrimSpace(strings.ToLower(choice))
 

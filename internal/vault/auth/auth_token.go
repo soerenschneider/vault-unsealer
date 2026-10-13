@@ -14,6 +14,6 @@ func (t *TokenAuth) Authenticate(_ *http.Client) (string, error) {
 	return t.token, nil
 }
 
-func (t *TokenAuth) Cleanup() error {
+func (t *TokenAuth) Cleanup(_ *http.Client) error {
 	return nil
 }

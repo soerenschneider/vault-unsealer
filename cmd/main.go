@@ -18,6 +18,7 @@ import (
 	"github.com/soerenschneider/vault-unsealer/v2/internal"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/config"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/config/unseal"
+	vault_auth "github.com/soerenschneider/vault-unsealer/v2/internal/config/vault"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/unsealing"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/vault"
 	"github.com/soerenschneider/vault-unsealer/v2/internal/vault/auth"
@@ -36,10 +37,10 @@ var (
 )
 
 type vaultUnsealer struct {
-	config              config.UnsealConfig
-	unsealKeyRetrievers []unsealing.UnsealKeyRetriever
-	vaultClient         vault.Client
-	unsealAgent         *internal.UnsealAgent
+	config       config.UnsealConfig
+	vaultClient  vault.Client
+	authMethods  []vault.AuthMethod
+	unsealAgents []*internal.UnsealAgent
 }
 
 func main() {
@@ -56,25 +57,22 @@ func main() {
 	unsealer.retrieveConfig()
 
 	log.Info().Msg("Building dependencies")
-	unsealer.buildDependencies(unsealer.config.Clusters[0])
+	unsealer.buildDependencies()
 
 	internal.UptimeMetric.SetToCurrentTime()
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		log.Info().Msg("Starting agent")
-		err := unsealer.unsealAgent.Run(ctx, wg)
-		if err != nil {
-			log.Fatal().Err(err).Msg("error running agent")
-		}
-	}()
+	for _, agent := range unsealer.unsealAgents {
+		wg.Go(func() {
+			agent.Run(ctx)
+		})
+	}
 
-	go func() {
-		err := internal.StartMetricsServer(unsealer.config.PrometheusAddr)
-		if err != nil {
-			log.Fatal().Err(err).Msg("could not start prometheus metrics server")
+	wg.Go(func() {
+		if err := internal.StartMetricsServer(ctx, unsealer.config.PrometheusAddr); err != nil {
+			log.Fatal().Err(err).Msg("prometheus metrics server failed")
 		}
-	}()
+	})
 
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc,
@@ -88,6 +86,7 @@ func main() {
 	cancel()
 	log.Info().Msg("Waiting for waitgroups")
 	wg.Wait()
+	unsealer.cleanup()
 	log.Info().Msg("Done, bye")
 }
 
@@ -104,10 +103,38 @@ func parseFlags() {
 }
 
 func configureHttpClient() {
+	defaultHttpClient = buildHttpClient()
+}
+
+func buildHttpClient() *http.Client {
 	client := retryablehttp.NewClient()
 	client.RetryMax = 5
-	defaultHttpClient = client.HTTPClient
-	defaultHttpClient.Timeout = 3 * time.Second
+	// timeout per attempt, not for the whole request including retries
+	client.HTTPClient.Timeout = 3 * time.Second
+	client.Logger = &retryableHttpLogger{}
+	// return the last response instead of a generic error once retries are exhausted, so callers can inspect it
+	client.ErrorHandler = retryablehttp.PassthroughErrorHandler
+	return client.StandardClient()
+}
+
+// retryableHttpLogger adapts zerolog to retryablehttp's LeveledLogger interface.
+type retryableHttpLogger struct{}
+
+// Error is called for each failed attempt, the final error is logged by the caller.
+func (l *retryableHttpLogger) Error(msg string, keysAndValues ...any) {
+	log.Warn().Fields(keysAndValues).Msg(msg)
+}
+
+func (l *retryableHttpLogger) Warn(msg string, keysAndValues ...any) {
+	log.Warn().Fields(keysAndValues).Msg(msg)
+}
+
+func (l *retryableHttpLogger) Info(msg string, keysAndValues ...any) {
+	log.Info().Fields(keysAndValues).Msg(msg)
+}
+
+func (l *retryableHttpLogger) Debug(msg string, keysAndValues ...any) {
+	log.Debug().Fields(keysAndValues).Msg(msg)
 }
 
 func configureLogging() {
@@ -130,18 +157,35 @@ func (u *vaultUnsealer) retrieveConfig() {
 	u.config = *conf
 }
 
-func (u *vaultUnsealer) buildDependencies(clusterConf config.ClusterConfig) {
+func (u *vaultUnsealer) buildDependencies() {
 	var err error
 	if u.vaultClient, err = u.buildVaultClient(); err != nil {
 		log.Fatal().Err(err).Msg("could not build vault client")
 	}
 
-	if u.unsealKeyRetrievers, err = u.buildKeyRetriever(clusterConf); err != nil {
-		log.Fatal().Err(err).Msg("could not build key retriever")
-	}
+	for idx, clusterConf := range u.config.Clusters {
+		name := clusterConf.NameOrDefault(idx)
 
-	if u.unsealAgent, err = internal.NewUnsealAgent(clusterConf, u.vaultClient, u.unsealKeyRetrievers); err != nil {
-		log.Fatal().Err(err).Msg("could not build unseal agent")
+		retrievers, err := u.buildKeyRetriever(clusterConf)
+		if err != nil {
+			log.Fatal().Err(err).Str("cluster", name).Msg("could not build key retriever")
+		}
+
+		log.Info().Str("cluster", name).Msg("Building agent")
+		agent, err := internal.NewUnsealAgent(name, clusterConf, u.vaultClient, retrievers)
+		if err != nil {
+			log.Fatal().Err(err).Str("cluster", name).Msg("could not build unseal agent")
+		}
+		u.unsealAgents = append(u.unsealAgents, agent)
+	}
+}
+
+// cleanup revokes all tokens that have been issued to vault-unsealer.
+func (u *vaultUnsealer) cleanup() {
+	for _, authMethod := range u.authMethods {
+		if err := authMethod.Cleanup(defaultHttpClient); err != nil {
+			log.Warn().Err(err).Msg("could not clean up vault auth")
+		}
 	}
 }
 
@@ -180,27 +224,28 @@ func (u *vaultUnsealer) buildKeyRetriever(clusterConf config.ClusterConfig) ([]u
 
 func (u *vaultUnsealer) buildAwsKmsRetriever(conf *unseal.AwsKmsConfig) (unsealing.UnsealKeyRetriever, error) {
 	log.Info().Msg("Building AWS KMS unseal key retriever")
-	awsKmsRetriever, err := unsealing.NewAwsKmsKeyRetriever(conf)
+	retriever, err := unsealing.NewAwsKmsKeyRetriever(conf)
 	if err != nil {
 		return nil, fmt.Errorf("could not build aws-kms retriever: %w", err)
 	}
 
-	return wrapRetriever(awsKmsRetriever, conf.WrappedPassphrase, conf.Cache)
+	return wrapRetriever(retriever, conf.MustGetWrappedPassphrase(), conf.Cache)
 }
 
 func (u *vaultUnsealer) buildKv2Retriever(conf *unseal.VaultKv2Config) (unsealing.UnsealKeyRetriever, error) {
 	log.Info().Msg("Building Vault KV2 unseal key retriever")
-	auth, err := auth.BuildVaultAuth(conf.VaultAuthType, conf.VaultAuthConfig, conf.VaultEndpoint, defaultHttpClient)
+	auth, err := BuildVaultAuth(conf.VaultAuthType, conf.VaultAuthConfig, conf.VaultEndpoint, defaultHttpClient)
 	if err != nil {
 		return nil, err
 	}
+	u.authMethods = append(u.authMethods, auth)
 
 	retriever, err := unsealing.NewVaultKvRetriever(u.vaultClient.(unsealing.VaultKv2), auth, *conf)
 	if err != nil {
 		return nil, fmt.Errorf("could not build vault-kv retriever: %w", err)
 	}
 
-	return wrapRetriever(retriever, conf.WrappedPassphrase, conf.Cache)
+	return wrapRetriever(retriever, conf.MustGetWrappedPassphrase(), conf.Cache)
 }
 
 func (u *vaultUnsealer) buildStaticRetriever(conf *unseal.VaultStaticConfig) (unsealing.UnsealKeyRetriever, error) {
@@ -210,22 +255,23 @@ func (u *vaultUnsealer) buildStaticRetriever(conf *unseal.VaultStaticConfig) (un
 		return nil, fmt.Errorf("could not build static retriever: %w", err)
 	}
 
-	return wrapRetriever(retriever, conf.WrappedPassphrase, false)
+	return wrapRetriever(retriever, conf.MustGetWrappedPassphrase(), conf.Cache)
 }
 
 func (u *vaultUnsealer) buildTransitRetriever(conf *unseal.VaultTransitConfig) (unsealing.UnsealKeyRetriever, error) {
 	log.Info().Msg("Building Vault transit impl to receive unseal keys")
-	auth, err := auth.BuildVaultAuth(conf.VaultAuthType, conf.VaultAuthConfig, conf.VaultEndpoint, defaultHttpClient)
+	auth, err := BuildVaultAuth(conf.VaultAuthType, conf.VaultAuthConfig, conf.VaultEndpoint, defaultHttpClient)
 	if err != nil {
 		return nil, err
 	}
+	u.authMethods = append(u.authMethods, auth)
 
 	retriever, err := unsealing.NewVaultTransitReceiver(u.vaultClient.(unsealing.VaultTransit), auth, conf)
 	if err != nil {
 		return nil, fmt.Errorf("could not build vault-transit retriever: %w", err)
 	}
 
-	return wrapRetriever(retriever, conf.WrappedPassphrase, false)
+	return wrapRetriever(retriever, conf.MustGetWrappedPassphrase(), conf.Cache)
 }
 
 func wrapRetriever(retriever unsealing.UnsealKeyRetriever, wrappedPassphrase string, cache bool) (unsealing.UnsealKeyRetriever, error) {
@@ -236,9 +282,10 @@ func wrapRetriever(retriever unsealing.UnsealKeyRetriever, wrappedPassphrase str
 	var err error
 	if wrappedPassphrase != "" {
 		log.Info().Str("retriever", retriever.Name()).Msg("Wrapping unseal key with age")
+		retrieverName := retriever.Name()
 		retriever, err = unsealing.NewAgeWrapper(wrappedPassphrase, retriever)
 		if err != nil {
-			return nil, fmt.Errorf("could not build age wrapper around %s retriever: %w", retriever.Name(), err)
+			return nil, fmt.Errorf("could not build age wrapper around %s retriever: %w", retrieverName, err)
 		}
 	}
 
@@ -253,4 +300,28 @@ func wrapRetriever(retriever unsealing.UnsealKeyRetriever, wrappedPassphrase str
 	}
 
 	return retriever, nil
+}
+
+func BuildVaultAuth(authType string, authData map[string]any, vaultEndpoint string, httpClient *http.Client) (vault.AuthMethod, error) {
+	switch authType {
+	case "implicit":
+		log.Info().Msg("Building 'implicit' vault auth implementation")
+		return auth.NewTokenImplicitAuth("~/.vault-token"), nil
+	case "token":
+		log.Info().Msg("Building 'token' vault auth implementation")
+		conf, err := config.UnmarshalGeneric[vault_auth.AuthTokenConfig](authData)
+		if err != nil {
+			return nil, err
+		}
+		return auth.NewTokenAuth(conf.Token)
+	case "approle":
+		log.Info().Msg("Building 'approle' vault auth implementation")
+		conf, err := config.UnmarshalGeneric[vault_auth.AuthApproleConfig](authData)
+		if err != nil {
+			return nil, err
+		}
+		return auth.NewAppRoleAuth(vaultEndpoint, *conf)
+	default:
+		return nil, fmt.Errorf("unknown vault auth implementation: %s", authType)
+	}
 }

@@ -1,6 +1,9 @@
 package unseal
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type VaultTransitConfig struct {
 	VaultAuthType              string         `yaml:"vault_auth_type" validate:"required,oneof implicit,token,approle"`
@@ -8,8 +11,8 @@ type VaultTransitConfig struct {
 	VaultEndpoint              string         `yaml:"vault_endpoint" validate:"required,http_url"`
 	VaultTransitMountPath      string         `yaml:"vault_transit_mount_path"`
 	VaultTransitKeyName        string         `yaml:"vault_transit_key_name" validate:"required"`
-	VaultTransitCiphertextFile string         `yaml:"vault_transit_ciphertext_file" validate:"file"`
-	VaultTransitCiphertext     string         `yaml:"vault_transit_ciphertext"`
+	VaultTransitCiphertextFile string         `yaml:"vault_transit_ciphertext_file" validate:"required_without=VaultTransitCiphertext,omitempty,file"`
+	VaultTransitCiphertext     string         `yaml:"vault_transit_ciphertext" validate:"required_without=VaultTransitCiphertextFile,omitempty"`
 
 	WrappedConfig `yaml:",inline"`
 }
@@ -24,5 +27,5 @@ func (c *VaultTransitConfig) GetCiphertext() (string, error) {
 		return "", err
 	}
 
-	return string(ciphertext), nil
+	return strings.TrimSpace(string(ciphertext)), nil
 }
