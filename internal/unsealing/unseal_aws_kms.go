@@ -8,7 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
-	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config/unseal"
 )
 
 type AwsKmsKeyRetriever struct {

@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
-	"github.com/soerenschneider/vault-unsealer/pkg/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config/unseal"
+	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault"
 )
 
 type VaultTransit interface {

@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/soerenschneider/vault-unsealer/internal/config/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config/vault"
 )
 
 type AppRoleAuth struct {

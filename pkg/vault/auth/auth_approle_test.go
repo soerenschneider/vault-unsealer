@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/soerenschneider/vault-unsealer/internal/config/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config/vault"
 )
 
 // MockTransport implements the RoundTripper interface

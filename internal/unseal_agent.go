@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/soerenschneider/vault-unsealer/internal/config"
-	"github.com/soerenschneider/vault-unsealer/internal/unsealing"
-	"github.com/soerenschneider/vault-unsealer/pkg/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/unsealing"
+	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault"
 	"go.uber.org/multierr"
 )
 
