@@ -1,0 +1,28 @@
+{
+  "prometheus_addr": ":9132",
+  "clusters": [
+    {
+      "name": "prod",
+      "endpoints_srv": {
+        "record": "_vault._tcp.vault.soeren.cloud",
+        "scheme": "https"
+      },
+      "check_interval_s": 60,
+      "unseal_key_config": [
+        {
+          "impl": "vault-kv2",
+          "vault_auth_type": "approle",
+          "vault_auth_config": {
+            "role_id": "yyy",
+            "secret_id_file": "/etc/vault-unsealer/secret-id"
+          },
+          "vault_endpoint": "https://vault.ha.soeren.cloud",
+          "vault_kv2_mount_path": "secret",
+          "vault_kv2_secret_path": "vault-unsealer/prod",
+          "wrapped_passphrase_file": "/etc/vault-unsealer/passphrase",
+          "cache": true
+        }
+      ]
+    }
+  ]
+}

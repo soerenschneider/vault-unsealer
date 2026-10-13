@@ -57,6 +57,20 @@ var (
 		Help:      "Indicates whether a vault instance is unsealed (1) or sealed (0).",
 	}, []string{"vault_instance"})
 
+	Instances = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: "agent",
+		Name:      "instances",
+		Help:      "Number of instances of a cluster found by the last successful discovery.",
+	}, []string{"cluster"})
+
+	EndpointDiscoveryErrors = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: "agent",
+		Name:      "endpoint_discovery_errors_total",
+		Help:      "Number of failed attempts to discover the instances of a cluster, e.g. via DNS SRV.",
+	}, []string{"cluster"})
+
 	UnsealErrors = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: "agent",
@@ -64,6 +78,15 @@ var (
 		Help:      "Number of errors while checking or unsealing a vault instance.",
 	}, []string{"error", "vault_instance"})
 )
+
+// deleteInstanceMetrics removes all metrics of an instance that is no longer part of its cluster, so it doesn't trigger
+// alerts on stale values.
+func deleteInstanceMetrics(instance string) {
+	labels := prometheus.Labels{"vault_instance": instance}
+	LastCheck.DeletePartialMatch(labels)
+	UnsealedStatus.DeletePartialMatch(labels)
+	UnsealErrors.DeletePartialMatch(labels)
+}
 
 const metricsShutdownTimeout = 5 * time.Second
 
