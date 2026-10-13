@@ -90,6 +90,53 @@ func TestValidate(t *testing.T) {
 			}()}},
 			wantErr: true,
 		},
+		{
+			name: "srv instead of endpoints",
+			conf: UnsealConfig{Clusters: []ClusterConfig{func() ClusterConfig {
+				c := validCluster()
+				c.Endpoints = nil
+				c.EndpointsSrv = &SrvConfig{Record: "_vault._tcp.example.com", Scheme: "http"}
+				return c
+			}()}},
+		},
+		{
+			name: "neither endpoints nor srv",
+			conf: UnsealConfig{Clusters: []ClusterConfig{func() ClusterConfig {
+				c := validCluster()
+				c.Endpoints = nil
+				return c
+			}()}},
+			wantErr: true,
+		},
+		{
+			name: "endpoints and srv",
+			conf: UnsealConfig{Clusters: []ClusterConfig{func() ClusterConfig {
+				c := validCluster()
+				c.EndpointsSrv = &SrvConfig{Record: "_vault._tcp.example.com"}
+				return c
+			}()}},
+			wantErr: true,
+		},
+		{
+			name: "srv without record",
+			conf: UnsealConfig{Clusters: []ClusterConfig{func() ClusterConfig {
+				c := validCluster()
+				c.Endpoints = nil
+				c.EndpointsSrv = &SrvConfig{}
+				return c
+			}()}},
+			wantErr: true,
+		},
+		{
+			name: "srv with invalid scheme",
+			conf: UnsealConfig{Clusters: []ClusterConfig{func() ClusterConfig {
+				c := validCluster()
+				c.Endpoints = nil
+				c.EndpointsSrv = &SrvConfig{Record: "_vault._tcp.example.com", Scheme: "ftp"}
+				return c
+			}()}},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -104,6 +151,7 @@ func TestExampleConfigsAreValid(t *testing.T) {
 	for _, file := range []string{
 		"../../contrib/example-config.json",
 		"../../contrib/example-config-static.json",
+		"../../contrib/example-config-srv.json",
 	} {
 		t.Run(file, func(t *testing.T) {
 			conf, err := ReadConfig(file)

@@ -17,6 +17,7 @@ var validate = validator.New()
 const (
 	defaultPrometheusAddr          = ":9132"
 	defaultKeyCheckIntervalSeconds = 3600 * 24
+	defaultSrvScheme               = "https"
 )
 
 func NewDefaultConfig() UnsealConfig {
@@ -32,10 +33,25 @@ type UnsealConfig struct {
 
 type ClusterConfig struct {
 	Name                    string           `yaml:"name,omitempty"`
-	Endpoints               []string         `yaml:"endpoints" validate:"required,min=1"`
+	Endpoints               []string         `yaml:"endpoints" validate:"omitempty,min=1"`
+	EndpointsSrv            *SrvConfig       `yaml:"endpoints_srv,omitempty"`
 	CheckIntervalSeconds    int              `yaml:"check_interval_s" validate:"gte=60,lte=3600"`
 	KeyCheckIntervalSeconds int              `yaml:"key_check_interval_s" validate:"omitempty,gte=60,lte=86400"`
 	RetrieveConfig          []map[string]any `yaml:"unseal_key_config"`
+}
+
+// SrvConfig configures the discovery of a cluster's instances via a DNS SRV record.
+type SrvConfig struct {
+	Record string `yaml:"record" validate:"required"`
+	Scheme string `yaml:"scheme,omitempty" validate:"omitempty,oneof=http https"`
+}
+
+// SchemeOrDefault returns the URL scheme used for the discovered instances.
+func (c SrvConfig) SchemeOrDefault() string {
+	if c.Scheme == "" {
+		return defaultSrvScheme
+	}
+	return c.Scheme
 }
 
 type VaultRetrieveConfig struct {
@@ -99,6 +115,12 @@ func Validate(conf *UnsealConfig) error {
 	names := map[string]bool{}
 	for idx, cluster := range conf.Clusters {
 		name := cluster.NameOrDefault(idx)
+		if cluster.Endpoints == nil && cluster.EndpointsSrv == nil {
+			return fmt.Errorf("cluster %q: either endpoints or endpoints_srv must be set", name)
+		}
+		if cluster.Endpoints != nil && cluster.EndpointsSrv != nil {
+			return fmt.Errorf("cluster %q: endpoints and endpoints_srv are mutually exclusive", name)
+		}
 		if names[name] {
 			return fmt.Errorf("cluster name %q is not unique", name)
 		}

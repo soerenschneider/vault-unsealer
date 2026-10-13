@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -19,6 +20,9 @@ type UnsealAgent struct {
 	keyRetrievers []unsealing.UnsealKeyRetriever
 	client        vault.Client
 	conf          config.ClusterConfig
+	discovery     endpointDiscovery
+	// endpoints are the instances found by the last successful discovery
+	endpoints []string
 }
 
 func NewUnsealAgent(name string, conf config.ClusterConfig, client vault.Client, keyRetrievers []unsealing.UnsealKeyRetriever) (*UnsealAgent, error) {
@@ -35,6 +39,7 @@ func NewUnsealAgent(name string, conf config.ClusterConfig, client vault.Client,
 		client:        client,
 		keyRetrievers: keyRetrievers,
 		conf:          conf,
+		discovery:     newEndpointDiscovery(conf),
 	}, nil
 }
 
@@ -117,12 +122,43 @@ func (u *UnsealAgent) checkKeyRetrievers(ctx context.Context) {
 }
 
 func (u *UnsealAgent) conditionallyUnsealInstances(ctx context.Context) {
-	for _, instance := range u.conf.Endpoints {
+	for _, instance := range u.discoverEndpoints(ctx) {
 		err := u.conditionalUnsealInstance(ctx, instance)
 		if err != nil {
 			log.Error().Err(err).Str("cluster", u.name).Msgf("conditionally unseal instance '%s' failed: %v", instance, err)
 		}
 	}
+}
+
+// discoverEndpoints returns the cluster's current instances. If discovery fails, the instances of the last successful
+// discovery are returned, so a temporary DNS outage doesn't stop the agent from unsealing known instances.
+func (u *UnsealAgent) discoverEndpoints(ctx context.Context) []string {
+	endpoints, err := u.discovery.Endpoints(ctx)
+	if err != nil {
+		EndpointDiscoveryErrors.WithLabelValues(u.name).Inc()
+		if len(u.endpoints) == 0 {
+			log.Error().Err(err).Str("cluster", u.name).Msg("Could not discover instances and no instances are known")
+		} else {
+			log.Warn().Err(err).Str("cluster", u.name).Msgf("Could not discover instances, using %d previously known instances", len(u.endpoints))
+		}
+		return u.endpoints
+	}
+
+	for _, instance := range u.endpoints {
+		if !slices.Contains(endpoints, instance) {
+			log.Info().Str("cluster", u.name).Str("instance", instance).Msg("Instance removed")
+			deleteInstanceMetrics(instance)
+		}
+	}
+	for _, instance := range endpoints {
+		if !slices.Contains(u.endpoints, instance) {
+			log.Info().Str("cluster", u.name).Str("instance", instance).Msg("Instance added")
+		}
+	}
+
+	u.endpoints = endpoints
+	Instances.WithLabelValues(u.name).Set(float64(len(endpoints)))
+	return endpoints
 }
 
 func (u *UnsealAgent) conditionalUnsealInstance(ctx context.Context, instance string) error {
