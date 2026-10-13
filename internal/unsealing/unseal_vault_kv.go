@@ -26,7 +26,7 @@ func NewVaultKvRetriever(client VaultKv2, auth vault.AuthMethod, config unseal.V
 	}
 
 	if auth == nil {
-		return nil, errors.New("emtpy AuthMethod provided")
+		return nil, errors.New("empty AuthMethod provided")
 	}
 
 	return &VaultKvRetriever{

@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog/log"
@@ -13,7 +15,8 @@ import (
 var validate = validator.New()
 
 const (
-	defaultPrometheusAddr = ":9132"
+	defaultPrometheusAddr          = ":9132"
+	defaultKeyCheckIntervalSeconds = 3600 * 24
 )
 
 func NewDefaultConfig() UnsealConfig {
@@ -23,16 +26,16 @@ func NewDefaultConfig() UnsealConfig {
 }
 
 type UnsealConfig struct {
-	Clusters       []ClusterConfig `yaml:"clusters"`
+	Clusters       []ClusterConfig `yaml:"clusters" validate:"required,min=1,dive"`
 	PrometheusAddr string          `yaml:"prometheus_addr,omitempty"`
 }
 
 type ClusterConfig struct {
-	Endpoints            []string         `yaml:"endpoints" validate:"required"`
-	VerifyClusterId      string           `yaml:"verify_cluster_id,omitempty"`
-	CacheUnsealKey       bool             `yaml:"cache_unseal_key"`
-	CheckIntervalSeconds int              `yaml:"check_interval_s" validate:"gte=60,lte=3600"`
-	RetrieveConfig       []map[string]any `yaml:"unseal_key_config"`
+	Name                    string           `yaml:"name,omitempty"`
+	Endpoints               []string         `yaml:"endpoints" validate:"required,min=1"`
+	CheckIntervalSeconds    int              `yaml:"check_interval_s" validate:"gte=60,lte=3600"`
+	KeyCheckIntervalSeconds int              `yaml:"key_check_interval_s" validate:"omitempty,gte=60,lte=86400"`
+	RetrieveConfig          []map[string]any `yaml:"unseal_key_config"`
 }
 
 type VaultRetrieveConfig struct {
@@ -89,7 +92,36 @@ func UnmarshalGeneric[T any](data map[string]any) (*T, error) {
 }
 
 func Validate(conf *UnsealConfig) error {
-	return validate.Struct(conf)
+	if err := validate.Struct(conf); err != nil {
+		return err
+	}
+
+	names := map[string]bool{}
+	for idx, cluster := range conf.Clusters {
+		name := cluster.NameOrDefault(idx)
+		if names[name] {
+			return fmt.Errorf("cluster name %q is not unique", name)
+		}
+		names[name] = true
+	}
+
+	return nil
+}
+
+// KeyCheckIntervalOrDefault returns the interval in which all key sources are checked.
+func (c ClusterConfig) KeyCheckIntervalOrDefault() time.Duration {
+	if c.KeyCheckIntervalSeconds == 0 {
+		return defaultKeyCheckIntervalSeconds * time.Second
+	}
+	return time.Duration(c.KeyCheckIntervalSeconds) * time.Second
+}
+
+// NameOrDefault returns the cluster's name, or its index in the list of clusters if no name is set.
+func (c ClusterConfig) NameOrDefault(idx int) string {
+	if len(c.Name) == 0 {
+		return strconv.Itoa(idx)
+	}
+	return c.Name
 }
 
 func ReadConfig(file string) (*UnsealConfig, error) {
@@ -98,7 +130,7 @@ func ReadConfig(file string) (*UnsealConfig, error) {
 		return nil, err
 	}
 
-	conf := UnsealConfig{}
+	conf := NewDefaultConfig()
 	err = yaml.Unmarshal(data, &conf)
 	return &conf, err
 }

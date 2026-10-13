@@ -83,6 +83,9 @@ func EncryptWithPassphrase(plaintext, passphrase string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create encrypter: %v", err)
 	}
+	defer func() {
+		_ = w.Close()
+	}()
 
 	if _, err := io.WriteString(w, plaintext); err != nil {
 		return "", fmt.Errorf("failed to write plaintext: %v", err)
