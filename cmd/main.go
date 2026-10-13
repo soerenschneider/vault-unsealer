@@ -15,12 +15,12 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/rs/zerolog"
 	log "github.com/rs/zerolog/log"
-	"github.com/soerenschneider/vault-unsealer/internal"
-	"github.com/soerenschneider/vault-unsealer/internal/config"
-	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
-	"github.com/soerenschneider/vault-unsealer/internal/unsealing"
-	"github.com/soerenschneider/vault-unsealer/pkg/vault"
-	"github.com/soerenschneider/vault-unsealer/pkg/vault/auth"
+	"github.com/soerenschneider/vault-unsealer/v2/internal"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config/unseal"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/unsealing"
+	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault/auth"
 	"go.uber.org/multierr"
 )
 

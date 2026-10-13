@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog/log"
-	"github.com/soerenschneider/vault-unsealer/internal/config"
-	vault_auth "github.com/soerenschneider/vault-unsealer/internal/config/vault"
-	"github.com/soerenschneider/vault-unsealer/pkg/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config"
+	vault_auth "github.com/soerenschneider/vault-unsealer/v2/internal/config/vault"
+	"github.com/soerenschneider/vault-unsealer/v2/pkg/vault"
 )
 
 func BuildVaultAuth(authType string, authData map[string]any, vaultEndpoint string, httpClient *http.Client) (vault.AuthMethod, error) {

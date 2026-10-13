@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog/log"
-	"github.com/soerenschneider/vault-unsealer/internal/config/unseal"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/config/unseal"
 	"gopkg.in/yaml.v3"
 )
 

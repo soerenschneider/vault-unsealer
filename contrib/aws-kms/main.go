@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/rs/zerolog/log"
-	"github.com/soerenschneider/vault-unsealer/internal/unsealing"
+	"github.com/soerenschneider/vault-unsealer/v2/internal/unsealing"
 	"golang.org/x/term"
 )
 
