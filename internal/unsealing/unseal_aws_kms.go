@@ -15,6 +15,7 @@ type AwsKmsKeyRetriever struct {
 	ciphertextBlob    []byte
 	encryptionContext map[string]string
 	region            string
+	keyId             string
 }
 
 func NewAwsKmsKeyRetriever(conf *unseal.AwsKmsConfig) (*AwsKmsKeyRetriever, error) {
@@ -40,6 +41,7 @@ func NewAwsKmsKeyRetriever(conf *unseal.AwsKmsConfig) (*AwsKmsKeyRetriever, erro
 		ciphertextBlob:    ciphertextBlob,
 		encryptionContext: conf.EncryptionContext,
 		region:            conf.Region,
+		keyId:             conf.KeyId,
 	}, nil
 }
 
@@ -55,15 +57,25 @@ func (r *AwsKmsKeyRetriever) RetrieveUnsealKey(ctx context.Context) (string, err
 
 	client := kms.NewFromConfig(cfg)
 
-	resp, err := client.Decrypt(ctx, &kms.DecryptInput{
-		CiphertextBlob:    r.ciphertextBlob,
-		EncryptionContext: r.encryptionContext,
-	})
+	resp, err := client.Decrypt(ctx, r.decryptInput())
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt: %w", err)
 	}
 
 	return string(resp.Plaintext), nil
+}
+
+// decryptInput builds the decrypt request. If a key id is configured, KMS refuses to decrypt ciphertexts of any other
+// key, otherwise the key embedded in the ciphertext is used.
+func (r *AwsKmsKeyRetriever) decryptInput() *kms.DecryptInput {
+	input := &kms.DecryptInput{
+		CiphertextBlob:    r.ciphertextBlob,
+		EncryptionContext: r.encryptionContext,
+	}
+	if r.keyId != "" {
+		input.KeyId = &r.keyId
+	}
+	return input
 }
 
 func (r *AwsKmsKeyRetriever) Name() string {
