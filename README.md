@@ -160,14 +160,14 @@ clusters:                          # list of clusters, each one is watched indep
 | Key                 | Type            | Required | Default | Description |
 |---------------------|-----------------|----------|---------|-------------|
 | `name`              | string          | no       | index   | Name of the cluster, used in logs and as `cluster` label in metrics. Defaults to the cluster's position in the list (`0`, `1`, …). Must be unique. |
-| `endpoints`         | list of strings | one of³  | –       | Base URLs of all Vault instances to watch, e.g. `https://vault-1.example.com:8200` (no trailing slash, no `/v1`). |
-| `endpoints_srv`     | object          | one of³  | –       | Discover the instances via a DNS SRV record instead, see [below](#discovering-instances-via-dns-srv). |
+| `endpoints`         | list of strings | one of²  | –       | Base URLs of all Vault instances to watch, e.g. `https://vault-1.example.com:8200` (no trailing slash, no `/v1`). |
+| `endpoints_srv`     | object          | one of²  | –       | Discover the instances via a DNS SRV record instead, see [below](#discovering-instances-via-dns-srv). |
 | `check_interval_s`  | integer         | yes      | –       | Seconds between seal-status checks. Must be between `60` and `3600`. |
 | `key_check_interval_s` | integer     | no       | `86400` | Seconds between checks of all key sources, see [How does it work](#how-does-it-work). Must be between `60` and `86400`. |
 | `unseal_key_config` | list of objects | yes      | –       | One or more [retrievers](#unseal-key-retrievers). Each retriever yields **one key share**. If your seal threshold is 3, configure 3 retrievers, each returning a different share. |
 | `cache_unseal_key`  | bool            | no       | –       | *Deprecated, has no effect.* Use the per-retriever [`cache`](#options-shared-by-all-retrievers) option instead. |
 
-³ Set exactly one of `endpoints` or `endpoints_srv`.
+² Set exactly one of `endpoints` or `endpoints_srv`.
 
 #### Discovering instances via DNS SRV
 
@@ -221,10 +221,10 @@ Recommended. The key share never exists in plaintext on disk; the transit cluste
 | `vault_auth_config`             | object | depends  | –       | Auth-specific settings. Required for `approle` and `token`. |
 | `vault_transit_mount_path`      | string | yes      | –       | Mount path of the transit engine, e.g. `transit`. There is no default. |
 | `vault_transit_key_name`        | string | yes      | –       | Name of the transit key. |
-| `vault_transit_ciphertext`      | string | one of²  | –       | The ciphertext (`vault:v1:...`) inline. |
-| `vault_transit_ciphertext_file` | path   | one of²  | –       | File containing the ciphertext. Read once at startup, used verbatim — **write it without a trailing newline**. |
+| `vault_transit_ciphertext`      | string | one of³  | –       | The ciphertext (`vault:v1:...`) inline. |
+| `vault_transit_ciphertext_file` | path   | one of³  | –       | File containing the ciphertext. Read once at startup, surrounding whitespace is stripped. |
 
-² Set exactly one of `vault_transit_ciphertext` or `vault_transit_ciphertext_file`. If both are set, the file wins.
+³ Set exactly one of `vault_transit_ciphertext` or `vault_transit_ciphertext_file`. If both are set, the file wins.
 
 The decrypted plaintext is base64-decoded and a trailing newline is stripped. Without `cache`, the key share is
 decrypted (and an AppRole login performed) on every unseal attempt.
@@ -246,17 +246,19 @@ The secret is read from `<vault_endpoint>/v1/<mount>/data/<secret_path>`; the la
 
 | Key                           | Type   | Required | Default            | Description |
 |-------------------------------|--------|----------|--------------------|-------------|
-| `aws_transit_ciphertext`      | string | one of³  | –                  | Base64-encoded KMS ciphertext blob. |
-| `aws_transit_ciphertext_file` | path   | one of³  | –                  | File containing the base64-encoded ciphertext blob. Read once at startup. |
+| `aws_transit_ciphertext`      | string | one of⁴  | –                  | Base64-encoded KMS ciphertext blob. |
+| `aws_transit_ciphertext_file` | path   | one of⁴  | –                  | File containing the base64-encoded ciphertext blob. Read once at startup. |
 | `aws_region`                  | string | no       | AWS SDK default    | Region of the KMS key. Overrides `AWS_REGION` / shared config. |
+| `aws_kms_key_id`              | string | no       | –                  | Key ID, key ARN, alias name or alias ARN of the KMS key. If set, KMS refuses to decrypt ciphertexts of any other key. |
 | `encryption_context`          | map    | no       | –                  | KMS encryption context; must match the context used at encryption time. |
 
-³ Set exactly one of them. If both are set, the file wins.
+⁴ Set exactly one of them. If both are set, the file wins.
 
 AWS credentials are resolved via the standard
 [AWS SDK default credential chain](https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html)
 (environment variables, shared config/credentials files, IAM Roles Anywhere, EC2/ECS instance roles, …). The KMS key
-ID does not need to be configured; it is embedded in the ciphertext. Use
+ID does not need to be configured, as it is embedded in the ciphertext. Setting `aws_kms_key_id` is still recommended
+if the IAM principal may use more than one key: it ensures a swapped ciphertext of another key is rejected. Use
 [`contrib/aws-kms`](contrib/aws-kms/main.go) to produce the ciphertext.
 
 #### static
@@ -300,11 +302,11 @@ vault_auth_config:
 | Key              | Type   | Required | Default   | Description |
 |------------------|--------|----------|-----------|-------------|
 | `role_id`        | string | yes      | –         | The AppRole role ID. |
-| `secret_id`      | string | one of⁴  | –         | The secret ID inline. |
-| `secret_id_file` | path   | one of⁴  | –         | File containing the secret ID. Read on every login (so it can be rotated externally) and used verbatim — **write it without a trailing newline**. |
+| `secret_id`      | string | one of⁵  | –         | The secret ID inline. |
+| `secret_id_file` | path   | one of⁵  | –         | File containing the secret ID. Read on every login (so it can be rotated externally), surrounding whitespace is stripped. |
 | `approle_mount`  | string | no       | `approle` | Mount path of the AppRole auth method. |
 
-⁴ If both are set, `secret_id` wins.
+⁵ If both are set, `secret_id` wins.
 
 The token obtained by logging in is reused until 80% of its TTL has passed, then a new login is performed. If Vault
 rejects the token earlier (e.g. it was revoked or `token_num_uses` is exhausted), vault-unsealer logs in again and
@@ -379,6 +381,7 @@ Each retriever returns a *different* key share, so compromising a single source 
         {
           "impl": "aws-kms",
           "aws_region": "eu-central-1",
+          "aws_kms_key_id": "alias/vault-unseal",
           "aws_transit_ciphertext_file": "/etc/vault-unsealer/share-1.kms",
           "encryption_context": { "purpose": "vault-unseal" },
           "cache": true
