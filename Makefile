@@ -1,6 +1,6 @@
 BUILD_DIR = builds
 BINARY_NAME = vault-unsealer
-MODULE = github.com/soerenschneider/$(BINARY_NAME)
+MODULE = github.com/soerenschneider/$(BINARY_NAME)/v2
 CHECKSUM_FILE = checksum.sha256
 SIGNATURE_KEYFILE = ~/.signify/github.sec
 DOCKER_PREFIX = ghcr.io/soerenschneider
