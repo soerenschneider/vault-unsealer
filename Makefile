@@ -13,6 +13,8 @@ export CGO_ENABLED = 0
 BUILD_FLAGS = -trimpath -buildvcs=false
 LDFLAGS = -w -buildid= -X '$(MODULE)/internal.BuildVersion=$(VERSION)' -X '$(MODULE)/internal.CommitHash=$(COMMIT_HASH)'
 
+# the race detector requires cgo on linux
+tests: export CGO_ENABLED = 1
 tests:
 	go test ./... -race -covermode=atomic -coverprofile=coverage.out
 	go tool cover -html=coverage.out -o=coverage.html
