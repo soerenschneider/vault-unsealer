@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.0.1](https://github.com/soerenschneider/vault-unsealer/compare/v2.0.0...v2.0.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **build:** enable cgo for race tests ([b512044](https://github.com/soerenschneider/vault-unsealer/commit/b5120449b3e6dada34d63229b3183e890fed0869))
+* **build:** use v2 module path for version ldflags ([6824e03](https://github.com/soerenschneider/vault-unsealer/commit/6824e03848623804194cf0632d009751f05d0e5b))
+* **deps:** bump actions/checkout from 5.1.0 to 7.0.1 ([901e5cb](https://github.com/soerenschneider/vault-unsealer/commit/901e5cbe20624edbf89296d7cfc4a9686a702fdd))
+* **deps:** bump docker/login-action from 3.7.0 to 4.8.0 ([9f31381](https://github.com/soerenschneider/vault-unsealer/commit/9f31381f65f0cce5cf14aa03a3151e2e032af15d))
+* **deps:** bump docker/metadata-action from 5.10.0 to 6.2.0 ([e3480c2](https://github.com/soerenschneider/vault-unsealer/commit/e3480c24fd49fb056b8efc560bac25f8e8bdd388))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/config ([3332729](https://github.com/soerenschneider/vault-unsealer/commit/333272920641380877b185acf804c6bd7c121b62))
+* **deps:** bump github.com/aws/aws-sdk-go-v2/service/kms ([41348c3](https://github.com/soerenschneider/vault-unsealer/commit/41348c3c4d45bec56e78117a1ebe16064f79f9d1))
+* **deps:** bump github.com/go-playground/validator/v10 ([278b18a](https://github.com/soerenschneider/vault-unsealer/commit/278b18a0c8277c3abe4a9c563660ef839a8e422b))
+* **deps:** Update module golang.org/x/term to v0.48.0 ([f431211](https://github.com/soerenschneider/vault-unsealer/commit/f431211b539466c314362825e51909e01c2ac77a))
+
+
+### Miscellaneous Chores
+
+* release 2.0.1 ([be98a35](https://github.com/soerenschneider/vault-unsealer/commit/be98a35f78fb35ce6167eae9c527fdc557c4b248))
+
 ## [2.0.0](https://github.com/soerenschneider/vault-unsealer/compare/v1.1.1...v2.0.0) (2026-10-15)
 
 
