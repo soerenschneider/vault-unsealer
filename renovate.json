@@ -2,6 +2,11 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
+      "description": "GitHub Actions run with the repo token: wait for a compromised release to be caught before updating",
+      "matchManagers": ["github-actions"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["patch", "minor"],
       "groupName": "GitHub Actions Updates",
