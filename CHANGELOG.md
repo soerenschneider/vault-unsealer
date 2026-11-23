@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.2](https://github.com/soerenschneider/vault-unsealer/compare/v2.0.1...v2.0.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** bump actions/setup-go from 5.6.0 to 7.0.0 ([eb6f5c8](https://github.com/soerenschneider/vault-unsealer/commit/eb6f5c820b823273828f5a0a7a740a642d82bd97))
+* **deps:** bump docker/build-push-action from 6.19.2 to 7.4.0 ([711cbca](https://github.com/soerenschneider/vault-unsealer/commit/711cbcacf68870b714f11370f3aa7ca88c3fb343))
+* **deps:** bump golangci/golangci-lint-action from 8.0.0 to 9.3.0 ([b009b27](https://github.com/soerenschneider/vault-unsealer/commit/b009b27d71fa6259e26c163a9a9e0c22b7716035))
+* **deps:** bump googleapis/release-please-action from 4.4.1 to 5.0.0 ([2af4cee](https://github.com/soerenschneider/vault-unsealer/commit/2af4cee7876ac5de8d7ac9d659408f52a9218d7f))
+
 ## [2.0.1](https://github.com/soerenschneider/vault-unsealer/compare/v2.0.0...v2.0.1) (2026-11-23)
 
 
