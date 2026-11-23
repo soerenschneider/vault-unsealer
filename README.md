@@ -69,10 +69,36 @@ docker run -v /path/to/config-dir:/config ghcr.io/soerenschneider/vault-unsealer
 
 The image runs as `nonroot`, so make sure the config file (and any referenced `*_file`) is readable by UID 65532.
 
+Images are signed with [cosign](https://github.com/sigstore/cosign) (keyless, via GitHub OIDC):
+
+```shell
+cosign verify ghcr.io/soerenschneider/vault-unsealer:main \
+    --certificate-identity "https://github.com/soerenschneider/vault-unsealer/.github/workflows/container-image.yaml@refs/heads/main" \
+    --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+```
+
 ### Binaries
 Download prebuilt binaries (linux amd64 / armv6 / aarch64) from the
 [releases section](https://github.com/soerenschneider/vault-unsealer/releases).
 Use the example [systemd unit](contrib/vault-unsealer.service) to run it at boot.
+
+Each release ships a `checksum.sha256` file, signed with [cosign](https://github.com/sigstore/cosign) (keyless, via
+GitHub OIDC) by the release workflow. A [signify](https://man.openbsd.org/signify) signature (`checksum.sha256.sig`)
+is added to the release afterwards.
+
+```shell
+# cosign
+cosign verify-blob checksum.sha256 \
+    --bundle checksum.sha256.cosign.bundle \
+    --certificate-identity "https://github.com/soerenschneider/vault-unsealer/.github/workflows/release.yaml@refs/heads/main" \
+    --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+
+# signify
+signify -V -p vault-unsealer.pub -m checksum.sha256
+
+# then verify the binary itself
+sha256sum --ignore-missing -c checksum.sha256
+```
 
 ### From source
 Requires a [Go SDK](https://go.dev/dl/) matching the version in [`go.mod`](go.mod).

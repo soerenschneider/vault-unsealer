@@ -20,10 +20,15 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # signing the image with cosign
+      id-token: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.1.3
 
       - name: Log in to the gcr registry
         uses: docker/login-action@v3.7.0
@@ -44,9 +49,17 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push container image
+        id: build
         uses: docker/build-push-action@v6.19.2
         with:
           context: .
           push: true
           tags: ${{ steps.gcr.outputs.tags }}
           labels: ${{ steps.gcr.outputs.labels }}
+
+      - name: Sign container image
+        env:
+          IMAGE: ${{ env.GH_REGISTRY }}/${{ env.IMAGE_NAME }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        # keyless: the identity of this workflow is certified via GitHub's OIDC token and logged in Rekor
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"
