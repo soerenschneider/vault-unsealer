@@ -109,6 +109,8 @@ cd vault-unsealer
 make build          # produces ./vault-unsealer with version info embedded
 ```
 
+Builds are reproducible: building the same tag with `make release` yields byte-identical binaries.
+
 ## Quick Start
 
 1. Encrypt one unseal key share with a transit key on an *other* Vault cluster (see

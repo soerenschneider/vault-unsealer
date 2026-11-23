@@ -2,6 +2,8 @@ module github.com/soerenschneider/vault-unsealer/v2
 
 go 1.26.0
 
+toolchain go1.27.4
+
 require (
 	filippo.io/age v1.3.2
 	github.com/aws/aws-sdk-go-v2/config v1.33.9
